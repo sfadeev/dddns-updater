@@ -2,6 +2,11 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DnsUpdater", "DnsUpdater\DnsUpdater.csproj", "{5B69628B-A033-4FB9-BE8C-521D5CD95FDF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{FD1E4C93-6736-46E1-9BE1-0BB6EE8B2507}"
+	ProjectSection(SolutionItems) = preProject
+		Dockerfile = Dockerfile
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +17,7 @@ Global
 		{5B69628B-A033-4FB9-BE8C-521D5CD95FDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B69628B-A033-4FB9-BE8C-521D5CD95FDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B69628B-A033-4FB9-BE8C-521D5CD95FDF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 EndGlobal

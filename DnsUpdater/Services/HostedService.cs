@@ -21,7 +21,7 @@ namespace DnsUpdater.Services
 	{
 		protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 		{
-			var pollDelay = TimeSpan.FromSeconds(30);
+			var pollDelay = TimeSpan.FromSeconds(5 * 60);
 
 			logger.LogInformation("Service starting, poll interval {delay}.", pollDelay);
 
