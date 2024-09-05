@@ -52,17 +52,16 @@ namespace DnsUpdater.Services
 							try
 							{
 								var ips = await ResolveIpAddress(domain, cancellationToken);
-
-								logger.LogInformation("Resolved IPs for {domain} : {ip}", domain, ips);
-
+								
 								if (ips.Contains(currentIpAddress))
 								{
-									logger.LogInformation("Resolved IPs contains current IP address, ignoring.");
+									logger.LogInformation
+										("Resolved IPs for {domain} {ips} contains current IP address, ignoring.", domain, ips);
 								}
 								else
 								{
 									logger.LogInformation(
-										"Resolved IPs does not contains current IP address, updating DNS records.");
+										"Resolved IPs for {domain} {ips} does not contains current IP address, updating DNS records.", domain, ips);
 
 									var result = await provider.UpdateAsync(dnsSettings, domain, currentIpAddress, cancellationToken);
 								
