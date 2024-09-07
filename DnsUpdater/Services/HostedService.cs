@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using DnsUpdater.Models;
 
 namespace DnsUpdater.Services
 {
@@ -17,17 +18,20 @@ namespace DnsUpdater.Services
 	}
 
 	public class HostedService(ILogger<HostedService> logger, IConfiguration configuration,
-		IIpProvider ipProvider, KeyedServiceProvider<IDnsProvider> keyedDnsServiceProvider) : BackgroundService
+		IIpProvider ipProvider, KeyedServiceProvider<IDnsProvider> keyedDnsServiceProvider,
+		IMessageSender messageSender) : BackgroundService
 	{
 		protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 		{
 			var pollDelay = TimeSpan.FromSeconds(5 * 60);
 
-			logger.LogInformation("Service starting, poll interval {delay}.", pollDelay);
+			logger.LogInformation("Service starting, poll interval {pollDelay}.", pollDelay);
 
 			var settings = ReadSettings();
 		
 			logger.LogInformation("Getting {count} item(s) from settings.", settings.Length);
+
+			await messageSender.Send(Messages.ServiceStarted(pollDelay, settings.Length), MessageType.Info, cancellationToken);
 		
 			while (cancellationToken.IsCancellationRequested == false)
 			{
@@ -37,7 +41,7 @@ namespace DnsUpdater.Services
 				
 				var currentIpAddress = await ipProvider.GetCurrentIpAddress(cancellationToken);
 
-				logger.LogInformation("Current IP Address : {ip}", currentIpAddress);
+				logger.LogInformation("Current IP address : {ip}", currentIpAddress);
 				
 				foreach (var dnsSettings in settings)
 				{
@@ -55,23 +59,35 @@ namespace DnsUpdater.Services
 								
 								if (ips.Contains(currentIpAddress))
 								{
-									logger.LogInformation
-										("Resolved IPs for {domain} {ips} contains current IP address, ignoring.", domain, ips);
+									logger.LogInformation(
+										"Resolved IPs {ips} for {domain} contains current IP address.", ips, domain);
 								}
 								else
 								{
 									logger.LogInformation(
-										"Resolved IPs for {domain} {ips} does not contains current IP address, updating DNS records.", domain, ips);
+										"Resolved IPs {ips} for {domain} does not contains current IP address, updating DNS records.", ips, domain);
 
 									var result = await provider.UpdateAsync(dnsSettings, domain, currentIpAddress, cancellationToken);
-								
-									logger.LogInformation("Update IP Address for {domain} to {ip} : {result}",
-										domain, currentIpAddress, result);
+									
+									if (result.Success)
+									{
+										logger.LogInformation("Address for {domain} updated to {ip}", domain, currentIpAddress);
+										
+										await messageSender.Send(Messages.SuccessUpdated(dnsSettings.Provider, domain, currentIpAddress), MessageType.Success, cancellationToken);
+									}
+									else
+									{
+										logger.LogInformation("Address for {domain} not updated — {message}", domain, result.Message);
+
+										await messageSender.Send(Messages.WarningNotUpdated(dnsSettings.Provider, domain, result.Message), MessageType.Warning, cancellationToken);
+									}
 								}
 							}
 							catch (Exception ex)
 							{
-								logger.LogError(ex, "Failed to process domain {domain}", domain);
+								logger.LogError(ex, "Failed to process {domain}", domain);
+								
+								await messageSender.Send(Messages.FailedUpdate(dnsSettings.Provider, domain, ex.Message), MessageType.Failure, cancellationToken);
 							}
 						}
 					}
@@ -81,14 +97,21 @@ namespace DnsUpdater.Services
 
 				if (sleepDelay > TimeSpan.Zero)
 				{
-					if (logger.IsEnabled(LogLevel.Debug))
-						logger.LogDebug("Service sleeping for {delay}.", sleepDelay);
+					if (logger.IsEnabled(LogLevel.Debug)) logger.LogDebug("Service sleeping for {delay}.", sleepDelay);
                 
 					await Task.Delay(sleepDelay, cancellationToken);
 				}
 			}
 		
+		}
+
+		public override async Task StopAsync(CancellationToken cancellationToken)
+		{
 			logger.LogInformation("Service stopping.");
+
+			await messageSender.Send(Messages.ServiceStopped(), MessageType.Info, cancellationToken);
+
+			await base.StopAsync(cancellationToken);
 		}
 
 		private DnsProviderSettings[] ReadSettings()

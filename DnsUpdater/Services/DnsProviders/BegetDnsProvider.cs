@@ -5,7 +5,7 @@ namespace DnsUpdater.Services.DnsProviders
 {
 	public class BegetDnsProvider(ILogger<BegetDnsProvider> logger, IHttpClientFactory httpClientFactory) : IDnsProvider
 	{
-		public async Task<bool> UpdateAsync(DnsProviderSettings settings, string domain, IPAddress ipAddress, CancellationToken cancellationToken)
+		public async Task<DnsUpdateResult> UpdateAsync(DnsProviderSettings settings, string domain, IPAddress ipAddress, CancellationToken cancellationToken)
 		{
 			var dataResult = await RequestApi(settings, "api/dns/getData", $@"{{""fqdn"":""{domain}""}}", cancellationToken);
 
@@ -17,9 +17,15 @@ namespace DnsUpdater.Services.DnsProviders
 
 			if (ips.Contains(ipAddress))
 			{
-				logger.LogInformation("IPs from API already contains current IP address, ignoring.");
+				var ipsString = string.Join(", ", ips.Select(x => x.ToString()));
+
+				logger.LogInformation("DNS record A from API {ips} already contains current address {ipAddress}", ipsString, ipAddress);
 			
-				return false;
+				return new DnsUpdateResult
+				{
+					Success = false,
+					Message = $"DNS record A from API {ipsString} already contains current address {ipAddress}"
+				};
 			}
 
 			var priority = settings.ConfigurationSection?.GetValue<int?>("priority") ?? 10;
@@ -34,7 +40,10 @@ namespace DnsUpdater.Services.DnsProviders
 
 			var result = await RequestApi(settings, "api/dns/changeRecords", data, cancellationToken);
 
-			return result.GetValue<bool>();
+			return new DnsUpdateResult
+			{
+				Success = result.GetValue<bool>()
+			};
 		}
 	
 		private async Task<JsonNode> RequestApi(DnsProviderSettings settings, string method, string data, CancellationToken cancellationToken)

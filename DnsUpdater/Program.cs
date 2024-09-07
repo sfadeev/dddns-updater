@@ -31,6 +31,7 @@ namespace DnsUpdater
 
 					.AddServiceKeyProvider()
 
+					.AddSingleton<IMessageSender, AppriseMessageSender>()
 					.AddSingleton<IIpProvider, DefaultIpProvider>()
 					.AddKeyedTransient<IIpProvider, IfconfigIpProvider>("ifconfig")
 					.AddKeyedTransient<IIpProvider, IpifiIpProvider>("ipify")
