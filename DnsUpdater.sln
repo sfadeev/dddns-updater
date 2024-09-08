@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		Dockerfile = Dockerfile
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DnsUpdater.Tests", "DnsUpdater.Tests\DnsUpdater.Tests.csproj", "{06E2C09C-0461-433B-A444-0448AE00A29B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,6 +19,10 @@ Global
 		{5B69628B-A033-4FB9-BE8C-521D5CD95FDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B69628B-A033-4FB9-BE8C-521D5CD95FDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B69628B-A033-4FB9-BE8C-521D5CD95FDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06E2C09C-0461-433B-A444-0448AE00A29B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06E2C09C-0461-433B-A444-0448AE00A29B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06E2C09C-0461-433B-A444-0448AE00A29B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06E2C09C-0461-433B-A444-0448AE00A29B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

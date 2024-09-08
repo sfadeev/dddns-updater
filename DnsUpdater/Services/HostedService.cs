@@ -42,6 +42,15 @@ namespace DnsUpdater.Services
 				var currentIpAddress = await ipProvider.GetCurrentIpAddress(cancellationToken);
 
 				logger.LogInformation("Current IP address : {ip}", currentIpAddress);
+
+				if (currentIpAddress.IsPrivateV4())
+				{
+					await messageSender.Send(Messages.PrivateIpWarning(currentIpAddress), MessageType.Warning, cancellationToken);
+					
+					await Sleep(pollDelay - sw.Elapsed, cancellationToken);
+
+					continue;
+				}
 				
 				foreach (var dnsSettings in settings)
 				{
@@ -92,17 +101,19 @@ namespace DnsUpdater.Services
 						}
 					}
 				}
-			
-				var sleepDelay = pollDelay - sw.Elapsed;
 
-				if (sleepDelay > TimeSpan.Zero)
-				{
-					if (logger.IsEnabled(LogLevel.Debug)) logger.LogDebug("Service sleeping for {delay}.", sleepDelay);
-                
-					await Task.Delay(sleepDelay, cancellationToken);
-				}
+				await Sleep(pollDelay - sw.Elapsed, cancellationToken);
 			}
-		
+		}
+
+		private async Task Sleep(TimeSpan delay, CancellationToken cancellationToken)
+		{
+			if (delay > TimeSpan.Zero)
+			{
+				if (logger.IsEnabled(LogLevel.Debug)) logger.LogDebug("Sleeping for {delay}, till {time}.", delay, DateTime.Now.Add(delay));
+                
+				await Task.Delay(delay, cancellationToken);
+			}
 		}
 
 		public override async Task StopAsync(CancellationToken cancellationToken)
@@ -132,7 +143,7 @@ namespace DnsUpdater.Services
 			return result.ToArray();
 		}
 
-		private async Task<IPAddress[]> ResolveIpAddress(string hostNameOrAddress, CancellationToken cancellationToken)
+		private static async Task<IPAddress[]> ResolveIpAddress(string hostNameOrAddress, CancellationToken cancellationToken)
 		{
 			var hostEntry = await Dns.GetHostEntryAsync(hostNameOrAddress, cancellationToken);
 

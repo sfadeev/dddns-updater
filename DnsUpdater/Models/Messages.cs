@@ -16,6 +16,11 @@ namespace DnsUpdater.Models
 			return "Service stopped 👎";
 		}
 		
+		public static string PrivateIpWarning(IPAddress ip)
+		{
+			return $"Current IP {ip} is private, skipping update";
+		}
+		
 		public static string SuccessUpdated(string provider, string domain, IPAddress ip)
 		{
 			return $"**{provider}** — {domain} DNS record A updated to {ip}";

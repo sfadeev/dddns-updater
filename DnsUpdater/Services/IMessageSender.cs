@@ -60,23 +60,21 @@ namespace DnsUpdater.Services
 					MessageType.Failure => "🔴",
 					_ => string.Empty
 				};
-
-				var client = httpClientFactory.CreateClient();
-
-				var body = new Message
+				
+				var bodyJson = JsonSerializer.Serialize(new Message
 				{
 					Urls = settings.NotifyUrls,
 					Title = icon + " DDDNS Updater @ " + Environment.MachineName,
 					Body = message,
 					Type = messageType.ToString().ToLower(),
 					Format = "markdown"
-				};
+				}, JsonOptions);
+				
+				var content = new StringContent(bodyJson, System.Text.Encoding.UTF8,  "application/json");
 			
-				var bodyJson = JsonSerializer.Serialize(body, JsonOptions);
+				var httpClient = httpClientFactory.CreateClient();
 
-				var content = new StringContent(bodyJson, System.Text.Encoding.UTF8, "application/json");
-			
-				var result = await client.PostAsync(settings.ServiceUrl, content, cancellationToken);
+				var result = await httpClient.PostAsync(settings.ServiceUrl, content, cancellationToken);
 
 				result.EnsureSuccessStatusCode();
 			
