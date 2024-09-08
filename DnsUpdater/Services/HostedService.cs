@@ -1,9 +1,13 @@
-using System.Diagnostics;
 using System.Net;
 using DnsUpdater.Models;
 
 namespace DnsUpdater.Services
 {
+	public class DnsUpdaterSettings
+	{
+		public TimeSpan PollInterval { get; init; } = TimeSpan.FromMinutes(5);
+	}
+	
 	public class DnsProviderSettings
 	{
 		public required string Provider { get; init; }
@@ -23,22 +27,16 @@ namespace DnsUpdater.Services
 	{
 		protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 		{
-			var pollDelay = TimeSpan.FromSeconds(5 * 60);
-
-			logger.LogInformation("Service starting, poll interval {pollDelay}.", pollDelay);
-
-			var settings = ReadSettings();
+			var settings = configuration.GetSection("DnsUpdater").Get<DnsUpdaterSettings>() ?? new DnsUpdaterSettings();
+			
+			var dnsSettings = ReadDnsSettings();
 		
-			logger.LogInformation("Getting {count} item(s) from settings.", settings.Length);
+			logger.LogInformation("Service started, poll interval {pollDelay}, {count} item(s) in settings.", settings.PollInterval,  dnsSettings.Length);
 
-			await messageSender.Send(Messages.ServiceStarted(pollDelay, settings.Length), MessageType.Info, cancellationToken);
-		
+			await messageSender.Send(Messages.ServiceStarted(settings.PollInterval, dnsSettings.Length), MessageType.Info, cancellationToken);
+			
 			while (cancellationToken.IsCancellationRequested == false)
 			{
-				var sw = new Stopwatch();
-				
-				sw.Start();
-				
 				var currentIpAddress = await ipProvider.GetCurrentIpAddress(cancellationToken);
 
 				logger.LogInformation("Current IP address : {ip}", currentIpAddress);
@@ -47,62 +45,73 @@ namespace DnsUpdater.Services
 				{
 					await messageSender.Send(Messages.PrivateIpWarning(currentIpAddress), MessageType.Warning, cancellationToken);
 					
-					await Sleep(pollDelay - sw.Elapsed, cancellationToken);
+					await Sleep(settings.PollInterval, cancellationToken);
 
 					continue;
 				}
+
+				var tasks = dnsSettings
+					// ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+					.Where(x => x.Provider != null && x.Domains?.Length > 0)
+					.Select(x => Process(currentIpAddress, x, cancellationToken));
 				
-				foreach (var dnsSettings in settings)
+				await Task.WhenAll(tasks);
+
+				await Sleep(settings.PollInterval, cancellationToken);
+			}
+		}
+
+		private async Task Process(IPAddress currentIpAddress, DnsProviderSettings settings, CancellationToken cancellationToken)
+		{
+			logger.LogDebug("Processing provider {provider} for domain(s) {domains}", settings.Provider, settings.Domains);
+
+			try
+			{
+				var provider = keyedDnsServiceProvider.GetRequiredKeyedService(settings.Provider);
+				
+				foreach (var domain in settings.Domains!)
 				{
-					logger.LogInformation("Processing provider {provider} for domain(s) {domains}", dnsSettings.Provider, dnsSettings.Domains);
-				
-					if (dnsSettings.Domains != null)
+					try
 					{
-						var provider = keyedDnsServiceProvider.GetRequiredKeyedService(dnsSettings.Provider);
-				
-						foreach (var domain in dnsSettings.Domains)
+						var ips = await ResolveIpAddress(domain, cancellationToken);
+							
+						if (ips.Contains(currentIpAddress))
 						{
-							try
-							{
-								var ips = await ResolveIpAddress(domain, cancellationToken);
-								
-								if (ips.Contains(currentIpAddress))
-								{
-									logger.LogInformation(
-										"Resolved IPs {ips} for {domain} contains current IP address.", ips, domain);
-								}
-								else
-								{
-									logger.LogInformation(
-										"Resolved IPs {ips} for {domain} does not contains current IP address, updating DNS records.", ips, domain);
+							logger.LogDebug("Resolved IPs {ips} for {domain} contains current IP address.", ips, domain);
+						}
+						else
+						{
+							logger.LogInformation("Resolved IPs {ips} for {domain} does not contains current IP address, updating DNS records.", ips, domain);
 
-									var result = await provider.UpdateAsync(dnsSettings, domain, currentIpAddress, cancellationToken);
+							var result = await provider.UpdateAsync(settings, domain, currentIpAddress, cancellationToken);
+								
+							if (result.Success)
+							{
+								logger.LogInformation("Address for {domain} updated to {ip}", domain, currentIpAddress);
 									
-									if (result.Success)
-									{
-										logger.LogInformation("Address for {domain} updated to {ip}", domain, currentIpAddress);
-										
-										await messageSender.Send(Messages.SuccessUpdated(dnsSettings.Provider, domain, currentIpAddress), MessageType.Success, cancellationToken);
-									}
-									else
-									{
-										logger.LogInformation("Address for {domain} not updated — {message}", domain, result.Message);
-
-										await messageSender.Send(Messages.WarningNotUpdated(dnsSettings.Provider, domain, result.Message), MessageType.Warning, cancellationToken);
-									}
-								}
+								await messageSender.Send(Messages.SuccessUpdated(settings.Provider, domain, currentIpAddress), MessageType.Success, cancellationToken);
 							}
-							catch (Exception ex)
+							else
 							{
-								logger.LogError(ex, "Failed to process {domain}", domain);
-								
-								await messageSender.Send(Messages.FailedUpdate(dnsSettings.Provider, domain, ex.Message), MessageType.Failure, cancellationToken);
+								logger.LogInformation("Address for {domain} not updated — {message}", domain, result.Message);
+
+								await messageSender.Send(Messages.WarningNotUpdated(settings.Provider, domain, result.Message), MessageType.Warning, cancellationToken);
 							}
 						}
 					}
+					catch (Exception ex)
+					{
+						logger.LogError(ex, "Failed to process {domain}", domain);
+							
+						await messageSender.Send(Messages.FailedUpdateDomain(settings.Provider, domain, ex.Message), MessageType.Failure, cancellationToken);
+					}
 				}
-
-				await Sleep(pollDelay - sw.Elapsed, cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "Failed to process provider {provider} for domain(s) {domains}\"", settings.Provider, settings.Domains);
+								
+				await messageSender.Send(Messages.FailedProcess(settings.Provider, ex.Message), MessageType.Failure, cancellationToken);
 			}
 		}
 
@@ -125,7 +134,7 @@ namespace DnsUpdater.Services
 			await base.StopAsync(cancellationToken);
 		}
 
-		private DnsProviderSettings[] ReadSettings()
+		private DnsProviderSettings[] ReadDnsSettings()
 		{
 			var result = new List<DnsProviderSettings>();
 		
@@ -133,11 +142,14 @@ namespace DnsUpdater.Services
 
 			foreach (var item in settings.GetChildren())
 			{
-				var settingsItem = item.Get<DnsProviderSettings>()!;
-			
-				settingsItem.ConfigurationSection = item;
-			
-				result.Add(settingsItem);
+				var settingsItem = item.Get<DnsProviderSettings>();
+
+				if (settingsItem != null)
+				{
+					settingsItem.ConfigurationSection = item;
+
+					result.Add(settingsItem);
+				}
 			}
 		
 			return result.ToArray();
