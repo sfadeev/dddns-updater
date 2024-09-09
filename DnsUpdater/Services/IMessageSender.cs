@@ -46,7 +46,7 @@ namespace DnsUpdater.Services
 			{
 				var settings = configuration.GetSection("Apprise").Get<AppriseSettings>();
 				
-				if (settings?.ServiceUrl == null || settings.NotifyUrls == null || settings.NotifyUrls.Length == 0)
+				if (settings?.ServiceUrl == null)
 				{
 					logger.LogDebug("Apprise notifications is not configured, message not sent.\n{message}", message);
 					

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.NetworkInformation;
 
 namespace DnsUpdater.Services
 {
