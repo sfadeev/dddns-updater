@@ -23,8 +23,8 @@ namespace DnsUpdater.Services
 	public enum MessageType
 	{
 		Info,
-		Success, 
-		Warning, 
+		Success,
+		Warning,
 		Failure
 	}
 

@@ -27,15 +27,15 @@ namespace DnsUpdater
 					
 				builder.Services
 					.AddHttpClient()
-					.AddHostedService<HostedService>()
-
 					.AddServiceKeyProvider()
-
-					.AddSingleton<IMessageSender, AppriseMessageSender>()
+					.AddHostedService<HostedService>()
 					.AddSingleton<IIpProvider, DefaultIpProvider>()
+					.AddSingleton<IUpdateStorage, JsonUpdateStorage>()
+					.AddSingleton<IMessageSender, AppriseMessageSender>()
+					
 					.AddKeyedTransient<IIpProvider, IfconfigIpProvider>("ifconfig")
 					.AddKeyedTransient<IIpProvider, IpifiIpProvider>("ipify")
-
+					
 					.AddKeyedTransient<IDnsProvider, BegetDnsProvider>("beget");
 
 				builder.Services.AddControllersWithViews();

@@ -23,7 +23,7 @@ namespace DnsUpdater.Services
 
 	public class HostedService(ILogger<HostedService> logger, IConfiguration configuration,
 		IIpProvider ipProvider, KeyedServiceProvider<IDnsProvider> keyedDnsServiceProvider,
-		IMessageSender messageSender) : BackgroundService
+		IMessageSender messageSender, IUpdateStorage storage) : BackgroundService
 	{
 		protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 		{
@@ -88,12 +88,16 @@ namespace DnsUpdater.Services
 							if (result.Success)
 							{
 								logger.LogInformation("Address for {domain} updated to {ip}", domain, currentIpAddress);
-									
+
+								await storage.Store(domain, currentIpAddress, settings.Provider, true, null, cancellationToken);
+								
 								await messageSender.Send(Messages.SuccessUpdated(settings.Provider, domain, currentIpAddress), MessageType.Success, cancellationToken);
 							}
 							else
 							{
 								logger.LogInformation("Address for {domain} not updated — {message}", domain, result.Message);
+
+								await storage.Store(domain, currentIpAddress, settings.Provider, false, result.Message, cancellationToken);
 
 								await messageSender.Send(Messages.WarningNotUpdated(settings.Provider, domain, result.Message), MessageType.Warning, cancellationToken);
 							}
