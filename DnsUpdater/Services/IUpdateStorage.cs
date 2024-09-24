@@ -6,13 +6,13 @@ namespace DnsUpdater.Services
 {
 	public interface IUpdateStorage
 	{
-		static int MaxUpdates = 10;
+		static readonly int MaxUpdates = 10;
 		
 		Task<DbUpdates> Store(string domain, IPAddress ip, string provider, bool success, string? message, CancellationToken cancellationToken);
 		
 		Task<DbUpdates> Query(CancellationToken cancellationToken);
 
-		Task Backup(CancellationToken cancellationToken);
+		// Task Backup(CancellationToken cancellationToken);
 	}
 	
 	public class DbUpdates
@@ -135,9 +135,9 @@ namespace DnsUpdater.Services
 			}
 		}
 		
-		public async Task Backup(CancellationToken cancellationToken)
+		/*public async Task Backup(CancellationToken cancellationToken)
 		{
 			throw new NotImplementedException();
-		}
+		}*/
 	}
 }

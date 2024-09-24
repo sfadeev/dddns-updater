@@ -96,9 +96,7 @@ namespace DnsUpdater.Services
 							else
 							{
 								logger.LogInformation("Address for {domain} not updated — {message}", domain, result.Message);
-
-								await storage.Store(domain, currentIpAddress, settings.Provider, false, result.Message, cancellationToken);
-
+								
 								await messageSender.Send(Messages.WarningNotUpdated(settings.Provider, domain, result.Message), MessageType.Warning, cancellationToken);
 							}
 						}
@@ -106,6 +104,8 @@ namespace DnsUpdater.Services
 					catch (Exception ex)
 					{
 						logger.LogError(ex, "Failed to process {domain}", domain);
+						
+						await storage.Store(domain, currentIpAddress, settings.Provider, false, ex.Message, cancellationToken);
 							
 						await messageSender.Send(Messages.FailedUpdateDomain(settings.Provider, domain, ex.Message), MessageType.Failure, cancellationToken);
 					}

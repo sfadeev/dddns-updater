@@ -24,7 +24,7 @@ namespace DnsUpdater.Services.DnsProviders
 				return new DnsUpdateResult
 				{
 					Success = false,
-					Message = $"DNS record A from API {ipsString} already contains current address {ipAddress}"
+					Message = $"DNS record A from API {ipsString} already contains current address {ipAddress} - DNS propagation in progress."
 				};
 			}
 
