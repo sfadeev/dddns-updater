@@ -41,7 +41,7 @@ namespace DnsUpdater.Services
 		
 		public string? Message { get; set; }
 	}
-	
+
 	public class JsonUpdateStorage(ILogger<JsonUpdateStorage> logger) : IUpdateStorage
 	{
 		private const string UpdatesFilePath = "./data/updates.json";
@@ -52,9 +52,8 @@ namespace DnsUpdater.Services
 			PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, 
 			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
 		};
-
-		// todo: create AsyncLock and use with using (var lock = await _lock.LockAsync()) { ... }
-		private readonly SemaphoreSlim _semaphore = new(1, 1);
+		
+		private readonly AsyncLock _lock = new();
 		
 		private async Task<DbUpdates> ReadUpdates(CancellationToken cancellationToken)
 		{
@@ -74,19 +73,17 @@ namespace DnsUpdater.Services
 		{
 			logger.LogDebug("Storing {ip} for {domain} to {provider}", ip, domain, provider);
 
-			await _semaphore.WaitAsync(cancellationToken);
-
-			try
+			using (await _lock.LockAsync(cancellationToken))
 			{
 				var now = DateTime.Now;
 
 				var dbUpdates = await ReadUpdates(cancellationToken);
 
-				var dbDomain = dbUpdates.Records.FirstOrDefault(x => x.Domain == domain);
+				var dbDomain = dbUpdates.Records.FirstOrDefault(x => string.Equals(x.Domain, domain, StringComparison.InvariantCultureIgnoreCase));
 
 				if (dbDomain == null)
 				{
-					dbDomain = new DbDomain { Domain = domain };
+					dbDomain = new DbDomain { Domain = domain.ToLowerInvariant() };
 
 					dbUpdates.Records.Add(dbDomain);
 				}
@@ -113,25 +110,15 @@ namespace DnsUpdater.Services
 
 				return dbUpdates;
 			}
-			finally
-			{
-				_semaphore.Release();
-			}
 		}
 
 		public async Task<DbUpdates> Query(CancellationToken cancellationToken)
 		{
 			logger.LogDebug("Querying records");
 			
-			await _semaphore.WaitAsync(cancellationToken);
-
-			try
+			using (await _lock.LockAsync(cancellationToken))
 			{
 				return await ReadUpdates(cancellationToken);
-			}
-			finally
-			{
-				_semaphore.Release();
 			}
 		}
 		

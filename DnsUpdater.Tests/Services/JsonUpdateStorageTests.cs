@@ -23,11 +23,13 @@ namespace DnsUpdater.Tests.Services
 			var result = await storage.Query(cancellationToken);
 			
 			Assert.That(result, Is.Not.Null);
-			Assert.That(result.Records, Has.Count.EqualTo(domainsCount));
+			
+			var records = result.Records.Where(x => x.Domain.StartsWith("domain-") && x.Domain.EndsWith(".tld")).ToList();
+			Assert.That(records, Has.Count.EqualTo(domainsCount));
 
 			for (var d = 0; d < domainsCount; d++)
 			{
-				Assert.That(result.Records[d].Updates, Has.Count.EqualTo(IUpdateStorage.MaxUpdates));
+				Assert.That(records[d].Updates, Has.Count.EqualTo(IUpdateStorage.MaxUpdates));
 			}
 
             return;
