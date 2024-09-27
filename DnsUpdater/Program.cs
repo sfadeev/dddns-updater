@@ -32,12 +32,15 @@ namespace DnsUpdater
 					.AddSingleton<IIpProvider, DefaultIpProvider>()
 					.AddSingleton<IUpdateStorage, JsonUpdateStorage>()
 					.AddSingleton<IMessageSender, AppriseMessageSender>()
+					.AddSingleton<IHealthcheckService, HealthcheckIoService>()
 					
 					.AddKeyedTransient<IIpProvider, IfconfigIpProvider>("ifconfig")
 					.AddKeyedTransient<IIpProvider, IpifiIpProvider>("ipify")
 					
 					.AddKeyedTransient<IDnsProvider, BegetDnsProvider>("beget");
 
+				// todo: add docker HEALTHCHECK
+				
 				builder.Services.AddControllersWithViews();
 
 				var app = builder.Build();

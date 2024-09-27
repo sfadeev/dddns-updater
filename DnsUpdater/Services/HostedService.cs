@@ -23,7 +23,7 @@ namespace DnsUpdater.Services
 
 	public class HostedService(ILogger<HostedService> logger, IConfiguration configuration,
 		IIpProvider ipProvider, KeyedServiceProvider<IDnsProvider> keyedDnsServiceProvider,
-		IMessageSender messageSender, IUpdateStorage storage) : BackgroundService
+		IHealthcheckService healthcheckService, IMessageSender messageSender, IUpdateStorage storage) : BackgroundService
 	{
 		protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 		{
@@ -33,6 +33,8 @@ namespace DnsUpdater.Services
 		
 			logger.LogInformation("Service started, poll interval {pollDelay}, {count} item(s) in settings.", settings.PollInterval,  dnsSettings.Length);
 
+			await healthcheckService.Start(cancellationToken);
+			
 			await messageSender.Send(Messages.ServiceStarted(settings.PollInterval, dnsSettings.Length), MessageType.Info, cancellationToken);
 			
 			while (cancellationToken.IsCancellationRequested == false)
@@ -91,13 +93,19 @@ namespace DnsUpdater.Services
 
 								await storage.Store(domain, currentIpAddress, settings.Provider, true, null, cancellationToken);
 								
+								await healthcheckService.Success(cancellationToken);
+								
 								await messageSender.Send(Messages.SuccessUpdated(settings.Provider, domain, currentIpAddress), MessageType.Success, cancellationToken);
 							}
 							else
 							{
 								logger.LogInformation("Address for {domain} not updated — {message}", domain, result.Message);
 								
-								await messageSender.Send(Messages.WarningNotUpdated(settings.Provider, domain, result.Message), MessageType.Warning, cancellationToken);
+								var message = Messages.WarningNotUpdated(settings.Provider, domain, result.Message);
+
+								await healthcheckService.Log(message, cancellationToken);
+
+								await messageSender.Send(message, MessageType.Warning, cancellationToken);
 							}
 						}
 					}
@@ -106,8 +114,12 @@ namespace DnsUpdater.Services
 						logger.LogError(ex, "Failed to process {domain}", domain);
 						
 						await storage.Store(domain, currentIpAddress, settings.Provider, false, ex.Message, cancellationToken);
-							
-						await messageSender.Send(Messages.FailedUpdateDomain(settings.Provider, domain, ex.Message), MessageType.Failure, cancellationToken);
+						
+						var message = Messages.FailedUpdateDomain(settings.Provider, domain, ex.Message);
+
+						await healthcheckService.Failure(message, cancellationToken);
+
+						await messageSender.Send(message, MessageType.Failure, cancellationToken);
 					}
 				}
 			}
