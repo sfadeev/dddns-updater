@@ -4,11 +4,9 @@ namespace DnsUpdater.Models
 {
 	public static class Messages
 	{
-		public static string ServiceStarted(TimeSpan pollDelay, int settingsCount)
+		public static string ServiceStarted()
 		{
-			return $"Service started 👍\n" +
-			       $"◦ Poll interval **{pollDelay}**\n" +
-			       $"◦ Serving **{settingsCount}** item(s) from settings";
+			return $"Service started 👍";
 		}
 		
 		public static string ServiceStopped()

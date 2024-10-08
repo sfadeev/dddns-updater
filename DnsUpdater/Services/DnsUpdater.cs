@@ -1,13 +1,9 @@
 using System.Net;
 using DnsUpdater.Models;
+using Quartz;
 
 namespace DnsUpdater.Services
 {
-	public class DnsUpdaterSettings
-	{
-		public TimeSpan PollInterval { get; init; } = TimeSpan.FromMinutes(5);
-	}
-	
 	public class DnsProviderSettings
 	{
 		public required string Provider { get; init; }
@@ -21,46 +17,35 @@ namespace DnsUpdater.Services
 		public IConfigurationSection? ConfigurationSection { get; internal set; }
 	}
 
-	public class HostedService(ILogger<HostedService> logger, IConfiguration configuration,
+	[DisallowConcurrentExecution]
+	public class DnsUpdater(ILogger<DnsUpdater> logger, IConfiguration configuration,
 		IIpProvider ipProvider, KeyedServiceProvider<IDnsProvider> keyedDnsServiceProvider,
-		IHealthcheckService healthcheckService, IMessageSender messageSender, IUpdateStorage storage) : BackgroundService
+		IHealthcheckService healthcheckService, IMessageSender messageSender, IUpdateStorage storage) : IJob
 	{
-		protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+		public async Task Execute(IJobExecutionContext context)
 		{
-			var settings = configuration.GetSection("DnsUpdater").Get<DnsUpdaterSettings>() ?? new DnsUpdaterSettings();
-			
+			await ExecuteAsync(context.CancellationToken);
+		}
+
+		private async Task ExecuteAsync(CancellationToken cancellationToken)
+		{
 			var dnsSettings = ReadDnsSettings();
-		
-			logger.LogInformation("Service started, poll interval {pollDelay}, {count} item(s) in settings.", settings.PollInterval,  dnsSettings.Length);
+			
+			var currentIpAddress = await ipProvider.GetCurrentIpAddress(cancellationToken);
 
-			await healthcheckService.Start(cancellationToken);
-			
-			await messageSender.Send(Messages.ServiceStarted(settings.PollInterval, dnsSettings.Length), MessageType.Info, cancellationToken);
-			
-			while (cancellationToken.IsCancellationRequested == false)
+			logger.LogInformation("Current IP address : {ip}", currentIpAddress);
+
+			if (currentIpAddress.IsPrivateV4())
 			{
-				var currentIpAddress = await ipProvider.GetCurrentIpAddress(cancellationToken);
-
-				logger.LogInformation("Current IP address : {ip}", currentIpAddress);
-
-				if (currentIpAddress.IsPrivateV4())
-				{
-					await messageSender.Send(Messages.PrivateIpWarning(currentIpAddress), MessageType.Warning, cancellationToken);
-					
-					await Sleep(settings.PollInterval, cancellationToken);
-
-					continue;
-				}
-
-				var tasks = dnsSettings
-					// ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-					.Where(x => x.Provider != null && x.Domains?.Length > 0)
-					.Select(x => Process(currentIpAddress, x, cancellationToken));
-				
-				await Task.WhenAll(tasks);
-
-				await Sleep(settings.PollInterval, cancellationToken);
+				await messageSender.Send(Messages.PrivateIpWarning(currentIpAddress), MessageType.Warning, cancellationToken);
 			}
+
+			var tasks = dnsSettings
+				// ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+				.Where(x => x.Provider != null && x.Domains?.Length > 0)
+				.Select(x => Process(currentIpAddress, x, cancellationToken));
+				
+			await Task.WhenAll(tasks);
 		}
 
 		private async Task Process(IPAddress currentIpAddress, DnsProviderSettings settings, CancellationToken cancellationToken)
@@ -130,26 +115,7 @@ namespace DnsUpdater.Services
 				await messageSender.Send(Messages.FailedProcess(settings.Provider, ex.Message), MessageType.Failure, cancellationToken);
 			}
 		}
-
-		private async Task Sleep(TimeSpan delay, CancellationToken cancellationToken)
-		{
-			if (delay > TimeSpan.Zero)
-			{
-				if (logger.IsEnabled(LogLevel.Debug)) logger.LogDebug("Sleeping for {delay}, till {time}.", delay, DateTime.Now.Add(delay));
-                
-				await Task.Delay(delay, cancellationToken);
-			}
-		}
-
-		public override async Task StopAsync(CancellationToken cancellationToken)
-		{
-			logger.LogInformation("Service stopping.");
-
-			await messageSender.Send(Messages.ServiceStopped(), MessageType.Info, cancellationToken);
-
-			await base.StopAsync(cancellationToken);
-		}
-
+		
 		private DnsProviderSettings[] ReadDnsSettings()
 		{
 			var result = new List<DnsProviderSettings>();

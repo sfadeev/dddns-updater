@@ -1,6 +1,7 @@
 using DnsUpdater.Services;
 using DnsUpdater.Services.DnsProviders;
 using DnsUpdater.Services.IpProviders;
+using Quartz;
 using Serilog;
 
 namespace DnsUpdater
@@ -24,22 +25,26 @@ namespace DnsUpdater
 					.AddSerilog((services, lc) => lc
 						.ReadFrom.Configuration(builder.Configuration)
 						.ReadFrom.Services(services));
-					
+
 				builder.Services
 					.AddHttpClient()
 					.AddServiceKeyProvider()
-					.AddHostedService<HostedService>()
+					.AddHostedService<BackgroundMessenger>()
 					.AddSingleton<IIpProvider, DefaultIpProvider>()
 					.AddSingleton<IUpdateStorage, JsonUpdateStorage>()
 					.AddSingleton<IMessageSender, AppriseMessageSender>()
 					.AddSingleton<IHealthcheckService, HealthcheckIoService>()
-					
+
 					.AddKeyedTransient<IIpProvider, IfconfigIpProvider>("ifconfig")
 					.AddKeyedTransient<IIpProvider, IpifiIpProvider>("ipify")
-					
-					.AddKeyedTransient<IDnsProvider, BegetDnsProvider>("beget");
 
-				// todo: add docker HEALTHCHECK
+					.AddKeyedTransient<IDnsProvider, BegetDnsProvider>("beget")
+					
+					.AddQuartz(quartz =>
+					{
+						quartz.AddJob<Services.DnsUpdater>(builder.Configuration);
+					})
+					.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 				
 				builder.Services.AddControllersWithViews();
 
