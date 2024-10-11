@@ -29,12 +29,14 @@ namespace DnsUpdater.Services
 
 		private async Task ExecuteAsync(CancellationToken cancellationToken)
 		{
+			await healthcheckService.Success(cancellationToken);
+
 			var dnsSettings = ReadDnsSettings();
 			
 			var currentIpAddress = await ipProvider.GetCurrentIpAddress(cancellationToken);
 
 			logger.LogInformation("Current IP address : {ip}", currentIpAddress);
-
+			
 			if (currentIpAddress.IsPrivateV4())
 			{
 				await messageSender.Send(Messages.PrivateIpWarning(currentIpAddress), MessageType.Warning, cancellationToken);

@@ -21,7 +21,7 @@ namespace DnsUpdater.Services
 	{
 		public async Task<bool> Success(CancellationToken cancellationToken = default)
 		{
-			return await Ping("/", null, cancellationToken);
+			return await Ping(string.Empty, null, cancellationToken);
 		}
 
 		public async Task<bool> Start(CancellationToken cancellationToken = default)
