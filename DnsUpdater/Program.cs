@@ -37,6 +37,10 @@ namespace DnsUpdater
 
 					.AddKeyedTransient<IIpProvider, IfconfigIpProvider>("ifconfig")
 					.AddKeyedTransient<IIpProvider, IpifiIpProvider>("ipify")
+					.AddKeyedTransient<IIpProvider, IdentIpProvider>("ident")
+					.AddKeyedTransient<IIpProvider, NnevIpProvider>("nnev")
+					.AddKeyedTransient<IIpProvider, WtfismyipIpProvider>("wtfismyip")
+					.AddKeyedTransient<IIpProvider, SeeipIpProvider>("seeip")
 
 					.AddKeyedTransient<IDnsProvider, BegetDnsProvider>("beget")
 					
