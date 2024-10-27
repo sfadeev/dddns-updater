@@ -3,11 +3,17 @@ using DnsUpdater.Services.DnsProviders;
 using DnsUpdater.Services.IpProviders;
 using Quartz;
 using Serilog;
+using Serilog.Extensions.Logging;
 
 namespace DnsUpdater
 {
 	public abstract class Program
 	{
+		public const string ConfigFilePath = "./data/settings.json";
+		public const string UpdatesFilePath = "./data/updates.json";
+		public const string BackupDirPath = "./data/";
+		public const string BackupFilePrefix = "backup";
+		
 		public static void Main(string[] args)
 		{
 			Log.Logger = new LoggerConfiguration()
@@ -15,11 +21,13 @@ namespace DnsUpdater
 				.WriteTo.Console()
 				.CreateBootstrapLogger();
 
+			var logger = new SerilogLoggerFactory(Log.Logger).CreateLogger<Program>();
+
 			try
 			{
 				var builder = WebApplication.CreateBuilder(args);
 
-				builder.Configuration.AddJsonFile("./data/settings.json", true, true);
+				builder.Configuration.AddJsonFile(ConfigFilePath, true, true);
 
 				builder.Services
 					.AddSerilog((services, lc) => lc
@@ -46,7 +54,9 @@ namespace DnsUpdater
 					
 					.AddQuartz(quartz =>
 					{
-						quartz.AddJob<Services.DnsUpdater>(builder.Configuration);
+						quartz
+							.AddJob<UpdateDnsJob>(logger, builder.Configuration)
+							.AddJob<BackupConfigJob>(logger, builder.Configuration);
 					})
 					.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 				

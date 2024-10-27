@@ -16,6 +16,7 @@ namespace DnsUpdater.Services.IpProviders
 
 			var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
+			// some providers return addresses with extra spaces
 			var contentTrimmed = content.Trim();
 			
 			return IPAddress.Parse(contentTrimmed);

@@ -24,6 +24,17 @@ namespace DnsUpdater.Models
 			return $"**{provider}** — domain {domain} DNS record A updated to {ip}";
 		}
 		
+		public static string CreatedBackup(string name, long size)
+		{
+			return $"Created backup **{name}**, size **{size}** bytes.";
+		}
+		
+		public static string FailedBackup(string error)
+		{
+			return $"Failed to backup configs\n" +
+			       $">{error}";
+		}
+		
 		public static string WarningNotUpdated(string provider, string domain, string? message)
 		{
 			return $"**{provider}** — domain {domain} DNS record A not updated \n" +

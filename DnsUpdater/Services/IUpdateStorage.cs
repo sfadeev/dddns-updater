@@ -1,6 +1,8 @@
+using System.IO.Compression;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DnsUpdater.Models;
 
 namespace DnsUpdater.Services
 {
@@ -12,7 +14,7 @@ namespace DnsUpdater.Services
 		
 		Task<DbUpdates> Query(CancellationToken cancellationToken);
 
-		// Task Backup(CancellationToken cancellationToken);
+		Task<Result<FileInfo>> Backup(BackupMode mode, CancellationToken cancellationToken);
 	}
 	
 	public class DbUpdates
@@ -42,10 +44,14 @@ namespace DnsUpdater.Services
 		public string? Message { get; set; }
 	}
 
+	public enum BackupMode
+	{
+		Auto = 0,
+		Force = 1
+	}
+
 	public class JsonUpdateStorage(ILogger<JsonUpdateStorage> logger) : IUpdateStorage
 	{
-		private const string UpdatesFilePath = "./data/updates.json";
-
 		private readonly JsonSerializerOptions _jsonOptions = new()
 		{
 			WriteIndented = true, 
@@ -59,9 +65,9 @@ namespace DnsUpdater.Services
 		{
 			DbUpdates? result = null;
 					
-			if (File.Exists(UpdatesFilePath))
+			if (File.Exists(Program.UpdatesFilePath))
 			{
-				var content = await File.ReadAllTextAsync(UpdatesFilePath, cancellationToken);
+				var content = await File.ReadAllTextAsync(Program.UpdatesFilePath, cancellationToken);
 					
 				result = JsonSerializer.Deserialize<DbUpdates>(content, _jsonOptions);
 			}
@@ -106,7 +112,7 @@ namespace DnsUpdater.Services
 
 				var json = JsonSerializer.Serialize(dbUpdates, _jsonOptions);
 
-				await File.WriteAllTextAsync(UpdatesFilePath, json, cancellationToken);
+				await File.WriteAllTextAsync(Program.UpdatesFilePath, json, cancellationToken);
 
 				return dbUpdates;
 			}
@@ -121,10 +127,56 @@ namespace DnsUpdater.Services
 				return await ReadUpdates(cancellationToken);
 			}
 		}
+
+		private readonly string[] _backupFiles = [ Program.ConfigFilePath, Program.UpdatesFilePath ];
 		
-		/*public async Task Backup(CancellationToken cancellationToken)
+		public Task<Result<FileInfo>> Backup(BackupMode mode, CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
-		}*/
+			var shouldBackup = ShouldBackup(mode);
+
+			if (shouldBackup)
+			{
+				var backupFilePath = Path.Combine(Program.BackupDirPath, 
+					$"{Program.BackupFilePrefix}-{DateTime.Now.ToString("s").Replace(":", "-")}.zip");
+
+				using (var stream = new FileStream(backupFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+				{
+					using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
+					{
+						foreach (var backupFile in _backupFiles)
+						{
+							archive.CreateEntryFromFile(backupFile, new FileInfo(backupFile).Name);
+						}
+					}
+				}
+
+				var fileInfo = new FileInfo(backupFilePath);
+				
+				logger.LogInformation("Created backup {name}, size {size} bytes.", fileInfo.Name, fileInfo.Length);
+
+				// todo: remove old backups
+				return Task.FromResult(Result.CreateSuccessResult(fileInfo));
+			}
+
+			logger.LogDebug("Backup not required.");
+			
+			return Task.FromResult(Result.CreateErrorResult<FileInfo>());
+		}
+
+		private bool ShouldBackup(BackupMode mode)
+		{
+			if (mode == BackupMode.Force) return true;
+			
+			var lastWrite = _backupFiles
+				.Select(x => new FileInfo(x).LastWriteTime).LastOrDefault();
+
+			var lastBackup = new DirectoryInfo(Program.BackupDirPath)
+				.EnumerateFiles(Program.BackupFilePrefix + "*" + ".zip")
+				.Select(x => x.LastWriteTime)
+				.OrderDescending()
+				.FirstOrDefault();
+			
+			return lastBackup < lastWrite;
+		}
 	}
 }

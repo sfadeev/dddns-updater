@@ -22,8 +22,12 @@ namespace DnsUpdater.Services.IpProviders
 				try
 				{
 					var ipProvider = keyedIpServiceProvider.GetRequiredKeyedService(key);
-			
-					return await ipProvider.GetCurrentIpAddress(cancellationToken);
+
+					var currentIpAddress = await ipProvider.GetCurrentIpAddress(cancellationToken);
+					
+					logger.LogInformation("Current IP address {ip} from provider {key}.", currentIpAddress, key);
+					
+					return currentIpAddress;
 				}
 				catch (Exception ex)
 				{
@@ -33,7 +37,8 @@ namespace DnsUpdater.Services.IpProviders
 				attempts--;
 			}
 			
-			throw new InvalidOperationException($"Cant not get current ip address in {keys.Count} attempts.");
+			// todo: replace exception with Result.Success = false
+			throw new InvalidOperationException($"Can not get current ip address in {keys.Count} attempts.");
 		}
 
 		private string GetCurrentProviderKey(IReadOnlyList<string> keys)

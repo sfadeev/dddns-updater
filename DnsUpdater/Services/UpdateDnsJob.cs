@@ -18,7 +18,7 @@ namespace DnsUpdater.Services
 	}
 
 	[DisallowConcurrentExecution]
-	public class DnsUpdater(ILogger<DnsUpdater> logger, IConfiguration configuration,
+	public class UpdateDnsJob(ILogger<UpdateDnsJob> logger, IConfiguration configuration,
 		IIpProvider ipProvider, KeyedServiceProvider<IDnsProvider> keyedDnsServiceProvider,
 		IHealthcheckService healthcheckService, IMessageSender messageSender, IUpdateStorage storage) : IJob
 	{
@@ -34,8 +34,6 @@ namespace DnsUpdater.Services
 			var dnsSettings = ReadDnsSettings();
 			
 			var currentIpAddress = await ipProvider.GetCurrentIpAddress(cancellationToken);
-
-			logger.LogInformation("Current IP address : {ip}", currentIpAddress);
 			
 			if (currentIpAddress.IsPrivateV4())
 			{
