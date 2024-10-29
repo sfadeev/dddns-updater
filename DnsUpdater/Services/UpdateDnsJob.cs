@@ -33,11 +33,22 @@ namespace DnsUpdater.Services
 
 			var dnsSettings = ReadDnsSettings();
 			
-			var currentIpAddress = await ipProvider.GetCurrentIpAddress(cancellationToken);
+			var currentIpAddressResult = await ipProvider.GetCurrentIpAddress(cancellationToken);
+			
+			if (currentIpAddressResult.Success == false)
+			{
+				await messageSender.Send(Messages.CurrentIpError(currentIpAddressResult.Error), MessageType.Failure, cancellationToken);
+
+				return;
+			}
+
+			var currentIpAddress = currentIpAddressResult.Data!;
 			
 			if (currentIpAddress.IsPrivateV4())
 			{
 				await messageSender.Send(Messages.PrivateIpWarning(currentIpAddress), MessageType.Warning, cancellationToken);
+				
+				return;
 			}
 
 			var tasks = dnsSettings

@@ -16,7 +16,7 @@ namespace DnsUpdater.Services
 				if (result.Success)
 				{
 					await messageSender.Send(
-						Messages.CreatedBackup(result.Data!.Name, result.Data!.Length),
+						Messages.BackupCreated(result.Data!.Name, result.Data!.Length),
 						MessageType.Info, context.CancellationToken);
 				}
 			}
@@ -25,7 +25,7 @@ namespace DnsUpdater.Services
 				logger.LogError(ex, "Failed to backup configs.");
 				
 				await messageSender.Send(
-					Messages.FailedBackup(ex.Message),
+					Messages.BackupFailed(ex.Message),
 					MessageType.Failure, context.CancellationToken);
 			}
 		}

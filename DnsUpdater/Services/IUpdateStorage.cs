@@ -157,8 +157,6 @@ namespace DnsUpdater.Services
 				// todo: remove old backups
 				return Task.FromResult(Result.CreateSuccessResult(fileInfo));
 			}
-
-			logger.LogDebug("Backup not required.");
 			
 			return Task.FromResult(Result.CreateErrorResult<FileInfo>());
 		}
@@ -175,8 +173,15 @@ namespace DnsUpdater.Services
 				.Select(x => x.LastWriteTime)
 				.OrderDescending()
 				.FirstOrDefault();
+
+			var result = lastBackup < lastWrite;
+
+			if (result)
+			{
+				logger.LogDebug("Backup required - last config write: {lastWrite}, last backup: {lastBackup}.", lastWrite, lastBackup);	
+			}
 			
-			return lastBackup < lastWrite;
+			return result;
 		}
 	}
 }

@@ -1,9 +1,10 @@
 using System.Net;
+using DnsUpdater.Models;
 
 namespace DnsUpdater.Services
 {
 	public interface IIpProvider
 	{
-		Task<IPAddress> GetCurrentIpAddress(CancellationToken cancellationToken);
+		Task<Result<IPAddress>> GetCurrentIpAddress(CancellationToken cancellationToken);
 	}
 }

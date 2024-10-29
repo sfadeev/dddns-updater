@@ -6,7 +6,7 @@ namespace DnsUpdater.Models
 	{
 		public static string ServiceStarted()
 		{
-			return $"Service started 👍";
+			return "Service started 👍";
 		}
 		
 		public static string ServiceStopped()
@@ -19,17 +19,23 @@ namespace DnsUpdater.Models
 			return $"Current IP {ip} is private, skipping update";
 		}
 		
+		public static string CurrentIpError(string? error)
+		{
+			return $"Failed to get current ip address\n" +
+			       $">{error}";
+		}
+		
 		public static string SuccessUpdated(string provider, string domain, IPAddress ip)
 		{
 			return $"**{provider}** — domain {domain} DNS record A updated to {ip}";
 		}
 		
-		public static string CreatedBackup(string name, long size)
+		public static string BackupCreated(string name, long size)
 		{
-			return $"Created backup **{name}**, size **{size}** bytes.";
+			return $"Backup created  **{name}**, size **{size}** bytes.";
 		}
 		
-		public static string FailedBackup(string error)
+		public static string BackupFailed(string error)
 		{
 			return $"Failed to backup configs\n" +
 			       $">{error}";

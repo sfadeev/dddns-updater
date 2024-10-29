@@ -1,4 +1,5 @@
 using System.Net;
+using DnsUpdater.Models;
 
 namespace DnsUpdater.Services.IpProviders
 {
@@ -9,12 +10,14 @@ namespace DnsUpdater.Services.IpProviders
 	{
 		private int _currentIndex;
 
-		public async Task<IPAddress> GetCurrentIpAddress(CancellationToken cancellationToken)
+		public async Task<Result<IPAddress>> GetCurrentIpAddress(CancellationToken cancellationToken)
 		{
 			var keys = ipProviderKeyProvider.Keys;
 			
 			var attempts = keys.Count;
 
+			var errors = new List<string>();
+			
 			while (attempts > 0)
 			{
 				var key = GetCurrentProviderKey(keys);
@@ -24,21 +27,27 @@ namespace DnsUpdater.Services.IpProviders
 					var ipProvider = keyedIpServiceProvider.GetRequiredKeyedService(key);
 
 					var currentIpAddress = await ipProvider.GetCurrentIpAddress(cancellationToken);
+
+					if (currentIpAddress.Success)
+					{
+						logger.LogInformation("Current IP address {ip} from provider {key}.", currentIpAddress.Data, key);
 					
-					logger.LogInformation("Current IP address {ip} from provider {key}.", currentIpAddress, key);
-					
-					return currentIpAddress;
+						return currentIpAddress;	
+					}
 				}
 				catch (Exception ex)
 				{
+					errors.Add($"{key} - {ex.Message}");
+					
 					logger.LogError(ex, "Failed to get current ip address from {key} provider.", key);
 				}
 				
 				attempts--;
 			}
+
+			errors.Add($"Cannot get current ip address in {keys.Count} attempts."); 
 			
-			// todo: replace exception with Result.Success = false
-			throw new InvalidOperationException($"Can not get current ip address in {keys.Count} attempts.");
+			return Result.CreateErrorResult<IPAddress>(string.Join('\n', errors));
 		}
 
 		private string GetCurrentProviderKey(IReadOnlyList<string> keys)
