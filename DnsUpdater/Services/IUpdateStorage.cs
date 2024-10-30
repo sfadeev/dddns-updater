@@ -143,7 +143,7 @@ namespace DnsUpdater.Services
 				{
 					using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
 					{
-						foreach (var backupFile in _backupFiles)
+						foreach (var backupFile in _backupFiles.Where(File.Exists))
 						{
 							archive.CreateEntryFromFile(backupFile, new FileInfo(backupFile).Name);
 						}
@@ -166,7 +166,10 @@ namespace DnsUpdater.Services
 			if (mode == BackupMode.Force) return true;
 			
 			var lastWrite = _backupFiles
-				.Select(x => new FileInfo(x).LastWriteTime).LastOrDefault();
+				.Select(x => new FileInfo(x))
+				.Where(x => x.Exists)
+				.Select(x => x.LastWriteTime)
+				.LastOrDefault();
 
 			var lastBackup = new DirectoryInfo(Program.BackupDirPath)
 				.EnumerateFiles(Program.BackupFilePrefix + "*" + ".zip")
