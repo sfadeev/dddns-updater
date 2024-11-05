@@ -1,11 +1,13 @@
 using System.Net;
 using System.Text.Json.Nodes;
+using DnsUpdater.Models;
 
 namespace DnsUpdater.Services.DnsProviders
 {
+	// https://beget.com/en/kb/api/dns-administration-functions
 	public class BegetDnsProvider(ILogger<BegetDnsProvider> logger, IHttpClientFactory httpClientFactory) : IDnsProvider
 	{
-		public async Task<DnsUpdateResult> UpdateAsync(DnsProviderSettings settings, string domain, IPAddress ipAddress, CancellationToken cancellationToken)
+		public async Task<Result> UpdateAsync(DnsProviderSettings settings, string domain, IPAddress ipAddress, CancellationToken cancellationToken)
 		{
 			var dataResult = await RequestApi(settings, "api/dns/getData", $@"{{""fqdn"":""{domain}""}}", cancellationToken);
 
@@ -19,12 +21,12 @@ namespace DnsUpdater.Services.DnsProviders
 			{
 				var ipsString = string.Join(", ", ips.Select(x => x.ToString()));
 
-				logger.LogInformation("DNS record A from API {ips} already contains current address {ipAddress}", ipsString, ipAddress);
+				logger.LogInformation("Record A from API {ips} already contains current address {ipAddress}", ipsString, ipAddress);
 			
-				return new DnsUpdateResult
+				return new Result
 				{
 					Success = false,
-					Message = $"DNS record A from API {ipsString} already contains current address {ipAddress} - DNS propagation in progress."
+					Error = $"Record A from API {ipsString} already contains current address {ipAddress} - DNS propagation in progress."
 				};
 			}
 
@@ -40,7 +42,7 @@ namespace DnsUpdater.Services.DnsProviders
 
 			var result = await RequestApi(settings, "api/dns/changeRecords", data, cancellationToken);
 
-			return new DnsUpdateResult
+			return new Result
 			{
 				Success = result.GetValue<bool>()
 			};
@@ -49,7 +51,7 @@ namespace DnsUpdater.Services.DnsProviders
 		private async Task<JsonNode> RequestApi(DnsProviderSettings settings, string method, string data, CancellationToken cancellationToken)
 		{
 			var client = httpClientFactory.CreateClient();
-		
+			
 			var uriBuilder = new UriBuilder(Uri.UriSchemeHttps, "api.beget.com")
 			{
 				Path = method,
@@ -58,7 +60,8 @@ namespace DnsUpdater.Services.DnsProviders
 					.Add("output_format", "json")
 					.Add("login", settings.Username!)
 					.Add("passwd", settings.Password!)
-					.Add("input_data", data).ToString()
+					.Add("input_data", data)
+					.ToString()
 			};
 		
 			var response = await client.GetAsync(uriBuilder.Uri, cancellationToken);
@@ -90,6 +93,7 @@ namespace DnsUpdater.Services.DnsProviders
 				return result;
 			}
 
+			// todo: return Result instead of exception
 			throw new InvalidOperationException(
 				$"Failed to request API method {method}, response status: {responseStatus}, answer status: {answerStatus}\n"
 				+ content);

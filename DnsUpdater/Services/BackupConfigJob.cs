@@ -4,8 +4,7 @@ using Quartz;
 namespace DnsUpdater.Services
 {
 	[DisallowConcurrentExecution]
-	public class BackupConfigJob(ILogger<UpdateDnsJob> logger,
-		IMessageSender messageSender, IUpdateStorage storage) : IJob
+	public class BackupConfigJob(ILogger<UpdateDnsJob> logger, IMessageSender messageSender, IUpdateStorage storage) : IJob
 	{
 		public async Task Execute(IJobExecutionContext context)
 		{

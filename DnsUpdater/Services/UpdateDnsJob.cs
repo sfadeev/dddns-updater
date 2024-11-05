@@ -95,9 +95,9 @@ namespace DnsUpdater.Services
 							}
 							else
 							{
-								logger.LogInformation("Address for {domain} not updated — {message}", domain, result.Message);
+								logger.LogInformation("Address for {domain} not updated — {message}", domain, result.Error);
 								
-								var message = Messages.WarningNotUpdated(settings.Provider, domain, result.Message);
+								var message = Messages.WarningNotUpdated(settings.Provider, domain, result.Error);
 
 								await healthcheckService.Log(message, cancellationToken);
 
