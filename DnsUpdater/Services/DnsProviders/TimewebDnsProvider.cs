@@ -3,7 +3,7 @@ using DnsUpdater.Models;
 
 namespace DnsUpdater.Services.DnsProviders
 {
-	public class TimewebDnsProvider(ILogger<BegetDnsProvider> logger, TimewebHttpClient client) : IDnsProvider
+	public class TimewebDnsProvider(ILogger<TimewebDnsProvider> logger, TimewebHttpClient client) : IDnsProvider
 	{
 		public async Task<Result> UpdateAsync(DnsProviderSettings settings, string domain, IPAddress ipAddress, CancellationToken cancellationToken)
 		{
