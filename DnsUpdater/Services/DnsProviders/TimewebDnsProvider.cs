@@ -1,5 +1,6 @@
 using System.Net;
 using DnsUpdater.Models;
+using DnsUpdater.Services.Jobs;
 
 namespace DnsUpdater.Services.DnsProviders
 {

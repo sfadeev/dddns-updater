@@ -1,7 +1,7 @@
 using DnsUpdater.Models;
 using Quartz;
 
-namespace DnsUpdater.Services
+namespace DnsUpdater.Services.Jobs
 {
 	[DisallowConcurrentExecution]
 	public class BackupConfigJob(ILogger<UpdateDnsJob> logger, IMessageSender messageSender, IUpdateStorage storage) : IJob
@@ -23,8 +23,10 @@ namespace DnsUpdater.Services
 			{
 				logger.LogError(ex, "Failed to backup configs.");
 				
+				var message = ExceptionUtils.BuildMessage(ex);
+				
 				await messageSender.Send(
-					Messages.BackupFailed(ex.Message),
+					Messages.BackupFailed(message),
 					MessageType.Failure, context.CancellationToken);
 			}
 		}

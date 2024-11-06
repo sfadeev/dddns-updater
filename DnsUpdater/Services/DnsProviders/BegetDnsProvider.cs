@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using DnsUpdater.Models;
+using DnsUpdater.Services.Jobs;
 
 namespace DnsUpdater.Services.DnsProviders
 {

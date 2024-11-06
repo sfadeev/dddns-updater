@@ -12,7 +12,6 @@ namespace DnsUpdater.Services
 			await healthcheckService.Start(cancellationToken);
 			
 			await messageSender.Send(Messages.ServiceStarted(), MessageType.Info, cancellationToken);
-
 		}
 		
 		public override async Task StopAsync(CancellationToken cancellationToken)

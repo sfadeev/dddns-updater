@@ -1,6 +1,7 @@
 using DnsUpdater.Services;
 using DnsUpdater.Services.DnsProviders;
 using DnsUpdater.Services.IpProviders;
+using DnsUpdater.Services.Jobs;
 using Quartz;
 using Serilog;
 using Serilog.Extensions.Logging;

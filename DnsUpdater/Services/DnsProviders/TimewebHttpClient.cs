@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DnsUpdater.Models;
+using DnsUpdater.Services.Jobs;
 
 namespace DnsUpdater.Services.DnsProviders
 {

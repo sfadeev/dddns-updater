@@ -2,7 +2,7 @@ using System.Net;
 using DnsUpdater.Models;
 using Quartz;
 
-namespace DnsUpdater.Services
+namespace DnsUpdater.Services.Jobs
 {
 	public class DnsProviderSettings
 	{
@@ -109,9 +109,11 @@ namespace DnsUpdater.Services
 					{
 						logger.LogError(ex, "Failed to process {domain}", domain);
 						
-						await storage.Store(domain, currentIpAddress, settings.Provider, false, ex.Message, cancellationToken);
+						var error = ExceptionUtils.BuildMessage(ex);
 						
-						var message = Messages.FailedUpdateDomain(settings.Provider, domain, ex.Message);
+						await storage.Store(domain, currentIpAddress, settings.Provider, false, error, cancellationToken);
+						
+						var message = Messages.FailedUpdateDomain(settings.Provider, domain, error);
 
 						await healthcheckService.Failure(message, cancellationToken);
 
@@ -122,8 +124,10 @@ namespace DnsUpdater.Services
 			catch (Exception ex)
 			{
 				logger.LogError(ex, "Failed to process provider {provider} for domain(s) {domains}\"", settings.Provider, settings.Domains);
-								
-				await messageSender.Send(Messages.FailedProcess(settings.Provider, ex.Message), MessageType.Failure, cancellationToken);
+
+				var error = ExceptionUtils.BuildMessage(ex);
+				
+				await messageSender.Send(Messages.FailedProcess(settings.Provider, error), MessageType.Failure, cancellationToken);
 			}
 		}
 		
@@ -150,9 +154,16 @@ namespace DnsUpdater.Services
 
 		private static async Task<IPAddress[]> ResolveIpAddress(string hostNameOrAddress, CancellationToken cancellationToken)
 		{
-			var hostEntry = await Dns.GetHostEntryAsync(hostNameOrAddress, cancellationToken);
+			try
+			{
+				var hostEntry = await Dns.GetHostEntryAsync(hostNameOrAddress, cancellationToken);
 
-			return hostEntry.AddressList;
+				return hostEntry.AddressList;
+			}
+			catch (Exception ex)
+			{
+				throw new ApplicationException($"Failed to resolve IP address for {hostNameOrAddress}", ex);
+			}
 		}
 	}
 }
