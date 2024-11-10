@@ -91,7 +91,8 @@ namespace DnsUpdater.Services.DnsProviders
 			
 			if (logger.IsEnabled(LogLevel.Debug))
 			{
-				logger.LogDebug("{httpMethod} {path}\n{content}", httpMethod, path, content);
+				logger.LogDebug("{httpMethod} {path} - {statusCode} {statusCodeText}\n{content}", 
+					httpMethod, path, (int)response.StatusCode, response.StatusCode, content);
 			}
 
 			if (response.IsSuccessStatusCode)
