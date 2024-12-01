@@ -115,7 +115,7 @@ namespace DnsUpdater.Services.Jobs
 						
 						var message = Messages.FailedUpdateDomain(settings.Provider, domain, error);
 
-						await healthcheckService.Failure(message, cancellationToken);
+						await healthcheckService.Log(message, cancellationToken);
 
 						await messageSender.Send(message, MessageType.Failure, cancellationToken);
 					}
