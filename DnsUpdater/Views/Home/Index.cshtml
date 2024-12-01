@@ -1,8 +1,55 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@model DnsUpdater.Services.DbUpdates;
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>DnsUpdater</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+</head>
+<body>
+
+<dl>
+    <dt>Last update</dt>
+    <dd>@Model.LastDate</dd>
+</dl>
+
+<table>
+    <tr>
+        <th>Date</th>
+        <th>Provider</th>
+        <th>IP</th>
+        <th>Message</th>
+    </tr>
+
+    @foreach (var record in Model.Records)
+    {
+        <tr>
+            <th class="domain" colspan="4">
+                <a href="http://@record.Domain" target="_blank">@record.Domain</a>
+            </th>
+        </tr>
+        
+        var updates = record.Updates.OrderByDescending(x => x.Date).ToList();
+        
+        @for (var i = 0; i < updates.Count; i++)
+        {
+            var update = updates[i];
+
+            <tr class="@(i == 0 ? "active" : "archive")">
+                <td>@update.Date</td>
+                <td><span class="badge">@update.Provider</span></td>
+                <td>@update.Ip</td>
+                <td>@update.Message</td>
+            </tr>
+        }
+        
+    }
+
+</table>
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+
+</body>
+</html>

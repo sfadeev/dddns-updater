@@ -1,32 +1,24 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using DnsUpdater.Models;
+using DnsUpdater.Services;
 
 namespace DnsUpdater.Controllers
 {
 	public class HomeController : Controller
 	{
 		private readonly ILogger<HomeController> _logger;
+		private readonly IUpdateStorage _storage;
 
-		public HomeController(ILogger<HomeController> logger)
+		public HomeController(ILogger<HomeController> logger, IUpdateStorage storage)
 		{
 			_logger = logger;
+			_storage = storage;
 		}
 
-		public IActionResult Index()
+		public async Task<IActionResult> Index(CancellationToken cancellationToken)
 		{
-			return View();
-		}
-
-		public IActionResult Privacy()
-		{
-			return View();
-		}
-
-		[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-		public IActionResult Error()
-		{
-			return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+			var updates = await _storage.Query(cancellationToken);
+			
+			return View(updates);
 		}
 	}
 }
