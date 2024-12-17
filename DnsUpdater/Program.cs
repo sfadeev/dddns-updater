@@ -68,6 +68,8 @@ namespace DnsUpdater
 
 				var app = builder.Build();
 
+				app.UseSerilogRequestLogging();
+				
 				if (app.Environment.IsDevelopment() == false)
 				{
 					app.UseExceptionHandler("/Home/Error");
