@@ -1,4 +1,5 @@
-﻿@model DnsUpdater.Services.DbUpdates;
+﻿@using System.Runtime.InteropServices
+@model DnsUpdater.Services.DbUpdates;
 
 <!DOCTYPE html>
 <html lang="en">
@@ -11,6 +12,10 @@
 <body>
 
 <dl>
+    <dt>OS</dt>
+    <dd>@RuntimeInformation.OSDescription</dd>
+    <dt>Framework</dt>
+    <dd>@RuntimeInformation.FrameworkDescription</dd>
     <dt>Last update</dt>
     <dd>@Model.LastDate</dd>
 </dl>
