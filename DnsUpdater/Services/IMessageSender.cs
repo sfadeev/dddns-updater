@@ -1,4 +1,6 @@
+using System.Reflection;
 using System.Text.Json;
+using DnsUpdater.Services.Jobs;
 
 namespace DnsUpdater.Services
 {
@@ -44,6 +46,7 @@ namespace DnsUpdater.Services
 		{
 			try
 			{
+				var appSettings = configuration.GetSection("Settings").Get<DnsUpdaterSettings>();
 				var settings = configuration.GetSection("Apprise").Get<AppriseSettings>();
 				
 				if (settings?.ServiceUrl == null)
@@ -60,11 +63,14 @@ namespace DnsUpdater.Services
 					MessageType.Failure => "🔴",
 					_ => string.Empty
 				};
+
+				var title = icon + Assembly.GetEntryAssembly()?.GetName().Name + " @ " + Environment.MachineName
+				            + (appSettings?.BaseUrl != null ? " — " + appSettings?.BaseUrl : string.Empty);
 				
 				var bodyJson = JsonSerializer.Serialize(new Message
 				{
 					Urls = settings.NotifyUrls,
-					Title = icon + " DDDNS Updater @ " + Environment.MachineName,
+					Title = title,
 					Body = message,
 					Type = messageType.ToString().ToLower(),
 					Format = "markdown"

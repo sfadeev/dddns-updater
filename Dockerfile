@@ -15,4 +15,4 @@ WORKDIR /app
 COPY --from=build /app .
 # Uncomment to enable non-root user
 # USER $APP_UID
-ENTRYPOINT [ "./DnsUpdater" ]
+ENTRYPOINT [ "./dddns-updater" ]

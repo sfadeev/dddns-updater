@@ -4,6 +4,11 @@ using Quartz;
 
 namespace DnsUpdater.Services.Jobs
 {
+	public class DnsUpdaterSettings
+	{
+		public string? BaseUrl { get; init; }
+	}
+	
 	public class DnsProviderSettings
 	{
 		public required string Provider { get; init; }
