@@ -140,7 +140,7 @@ namespace DnsUpdater.Services.Jobs
 		{
 			var result = new List<DnsProviderSettings>();
 		
-			var settings = configuration.GetSection("Settings");
+			var settings = configuration.GetSection("Providers");
 
 			foreach (var item in settings.GetChildren())
 			{
