@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+
 namespace DnsUpdater.Services
 {
 	public interface IHealthcheckService
@@ -11,13 +13,15 @@ namespace DnsUpdater.Services
 		public Task<bool> Log(string message, CancellationToken cancellationToken = default);
 	}
 
-	public class HealthcheckIoSettings
+	public class HealthcheckIoOptions : IConfigOptions
 	{
+		public static string SectionName  => "HealthcheckIo";
+
 		public string? Url { get; set; }
 	}
 	
 	public class HealthcheckIoService(ILogger<HealthcheckIoService> logger,
-		IConfiguration configuration, IHttpClientFactory httpClientFactory) : IHealthcheckService
+		IOptions<HealthcheckIoOptions> options, IHttpClientFactory httpClientFactory) : IHealthcheckService
 	{
 		public async Task<bool> Success(CancellationToken cancellationToken = default)
 		{
@@ -41,7 +45,7 @@ namespace DnsUpdater.Services
 
 		private async Task<bool> Ping(string method, string? message, CancellationToken cancellationToken)
 		{
-			var settings = configuration.GetSection("HealthcheckIo").Get<HealthcheckIoSettings>();
+			var settings = options.Value;
 			
 			if (settings?.Url == null)
 			{

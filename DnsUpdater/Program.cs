@@ -30,6 +30,11 @@ namespace DnsUpdater
 
 				builder.Configuration.AddJsonFile(ConfigFilePath, true, true);
 
+				builder
+					.Configure<AppOptions>()
+					.Configure<AppriseOptions>()
+					.Configure<HealthcheckIoOptions>();
+				
 				builder.Services
 					.AddSerilog((services, lc) => lc
 						.ReadFrom.Configuration(builder.Configuration)

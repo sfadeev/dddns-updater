@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using DnsUpdater.Services.Jobs;
+using Microsoft.Extensions.Options;
 
 namespace DnsUpdater.Services
 {
@@ -30,15 +31,17 @@ namespace DnsUpdater.Services
 		Failure
 	}
 
-	public class AppriseSettings
+	public class AppriseOptions : IConfigOptions
 	{
+		public static string SectionName => "Apprise";
+
 		public string? ServiceUrl { get; set; }
 		
 		public string[]? NotifyUrls { get; set; }
 	}
 	
-	public class AppriseMessageSender(ILogger<AppriseMessageSender> logger, 
-		IConfiguration configuration, IHttpClientFactory httpClientFactory) : IMessageSender
+	public class AppriseMessageSender(ILogger<AppriseMessageSender> logger,
+		IOptions<AppOptions> appOptions, IOptions<AppriseOptions> options, IHttpClientFactory httpClientFactory) : IMessageSender
 	{
 		private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 		
@@ -46,8 +49,8 @@ namespace DnsUpdater.Services
 		{
 			try
 			{
-				var appSettings = configuration.GetSection("Settings").Get<DnsUpdaterSettings>();
-				var settings = configuration.GetSection("Apprise").Get<AppriseSettings>();
+				var appSettings = appOptions.Value;
+				var settings = options.Value;
 				
 				if (settings?.ServiceUrl == null)
 				{
