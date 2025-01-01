@@ -1,19 +1,18 @@
 using System.Xml.Serialization;
 using DnsUpdater.Services.DnsProviders;
-using DnsUpdater.Services.Jobs;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace DnsUpdater.Tests.Services.DnsProviders
 {
 	public class NicRuHttpClientTest
 	{
-		[Test]
+		[Test, Ignore("Integration test")]
 		public async Task ServicesApi_ForRealAccount_ShouldReturnAtLeastOne()
 		{
 			// arrange
 			var cancellationToken = new CancellationTokenSource().Token;
 			var client = new NicRuHttpClient(NullLogger<NicRuDnsProvider>.Instance, new HttpClient());
-			var settings = GetSettings();
+			var settings = NicRuSettingsFactory.CreateTestSettings();
 			
 			// act
 			var result = await client.Services(settings, cancellationToken);
@@ -24,13 +23,13 @@ namespace DnsUpdater.Tests.Services.DnsProviders
 			Assert.That(result.Data?.Data?.Services?.Length, Is.AtLeast(1));
 		}
 		
-		[Test]
+		[Test, Ignore("Integration test")]
 		public async Task ZonesApi_ForRealAccount_ShouldReturnAtLeastOne()
 		{
 			// arrange
 			var cancellationToken = new CancellationTokenSource().Token;
 			var client = new NicRuHttpClient(NullLogger<NicRuDnsProvider>.Instance, new HttpClient());
-			var settings = GetSettings();
+			var settings = NicRuSettingsFactory.CreateTestSettings();
 			
 			// act
 			var result = await client.Zones(settings, cancellationToken);
@@ -89,18 +88,6 @@ name=""test.su"" payer=""123/NIC-REG"" service=""myservice"" />
 			// assert
 			Assert.That(result, Is.Not.Null);
 			Assert.That(result.Data?.Zones?.Length, Is.EqualTo(3));
-		}
-
-		private static DnsProviderSettings GetSettings()
-		{
-			return new DnsProviderSettings
-			{
-				Provider = "nicru",
-				ClientId = Environment.GetEnvironmentVariable("NicRu.ClientId"),
-				ClientSecret = Environment.GetEnvironmentVariable("NicRu.ClientSecret"),
-				Username = Environment.GetEnvironmentVariable("NicRu.Username"),
-				Password = Environment.GetEnvironmentVariable("NicRu.Password")
-			};
 		}
 	}
 }
