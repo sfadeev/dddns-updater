@@ -58,6 +58,7 @@ namespace DnsUpdater
 
 					.AddKeyedTransient<IDnsProvider, BegetDnsProvider>("beget")
 					.AddKeyedTransient<IDnsProvider, TimewebDnsProvider>("timeweb")
+					.AddKeyedTransient<IDnsProvider, NicRuDnsProvider>("nicru")
 					
 					.AddTransient<TimewebHttpClient>()
 					

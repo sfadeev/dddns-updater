@@ -30,7 +30,6 @@ namespace DnsUpdater.Services.DnsProviders
 				else
 				{
 					throw new InvalidOperationException("Failed to get authorization token.\n" + result.Error);
-					
 				}
 			}
 		}
@@ -66,41 +65,41 @@ namespace DnsUpdater.Services.DnsProviders
 			HttpMethod httpMethod, string path, object? data, CancellationToken cancellationToken)
 		{
 			var client = httpClientFactory.CreateClient();
-
+			
 			var uriBuilder = new UriBuilder(Uri.UriSchemeHttps, "api.timeweb.ru") { Path = path };
-			
+
 			var request = new HttpRequestMessage(httpMethod, uriBuilder.Uri);
-			
+
 			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			request.Headers.Add("x-app-key", settings.ConfigurationSection!["appkey"]);
-			
-			request.Headers.Authorization = _token == null 
+
+			request.Headers.Authorization = _token == null
 				? new BasicAuthenticationHeaderValue(settings.Username, settings.Password)
 				: new BearerAuthenticationHeaderValue(_token);
 
 			if (data != null)
 			{
 				var jsonData = JsonSerializer.Serialize(data, JsonSerializerOptions);
-				
+
 				request.Content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 			}
 
 			var response = await client.SendAsync(request, cancellationToken);
-			
+
 			var content = await response.Content.ReadAsStringAsync(cancellationToken);
-			
+
 			if (logger.IsEnabled(LogLevel.Debug))
 			{
-				logger.LogDebug("{httpMethod} {path} - {statusCode} {statusCodeText}\n{content}", 
+				logger.LogDebug("{httpMethod} {path} - {statusCode} {statusCodeText}\n{content}",
 					httpMethod, path, (int)response.StatusCode, response.StatusCode, content);
 			}
 
 			if (response.IsSuccessStatusCode)
 			{
-				var result = (response.Content.Headers.ContentLength > 0) 
+				var result = response.Content.Headers.ContentLength > 0
 					? await response.Content.ReadFromJsonAsync<TResult>(cancellationToken)
 					: default;
-			
+
 				return Result.CreateSuccessResult(result);
 			}
 

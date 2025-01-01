@@ -19,6 +19,10 @@ namespace DnsUpdater.Services.Jobs
 	
 		public string? Password { get; init; }
 	
+		public string? ClientId { get; init; }
+	
+		public string? ClientSecret { get; init; }
+	
 		public string[]? Domains { get; init; }
 
 		public IConfigurationSection? ConfigurationSection { get; internal set; }
