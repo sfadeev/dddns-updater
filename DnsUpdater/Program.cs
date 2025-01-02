@@ -57,9 +57,11 @@ namespace DnsUpdater
 					.AddKeyedTransient<IIpProvider, SeeipIpProvider>("seeip")
 
 					.AddKeyedTransient<IDnsProvider, BegetDnsProvider>("beget")
+					.AddKeyedTransient<IDnsProvider, RegRuDnsProvider>("regru")
 					.AddKeyedTransient<IDnsProvider, TimewebDnsProvider>("timeweb")
 					.AddKeyedTransient<IDnsProvider, NicRuDnsProvider>("nicru")
 					
+					.AddTransient<RegRuHttpClient>()
 					.AddTransient<TimewebHttpClient>()
 					
 					.AddQuartz(quartz =>
