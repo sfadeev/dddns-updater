@@ -14,9 +14,9 @@ Inspired by [qdm12/ddns-updater](https://github.com/qdm12/ddns-updater)
 3. Update `A` record of configured domains in `.json` file for supported DNS providers
 4. Store IP updates history in `.json` file
 5. Simple web UI to view updates history
-6. **Optional** Backup configuration and updates history files
+6. Backup configuration and updates history files
 7. **Optional** Send notifications with [Apprise](https://github.com/caronc/apprise)
-8. **Optional** Helthcheck with [Healthchecks.io](https://healthchecks.io/)
+8. **Optional** Healthcheck with [Healthchecks.io](https://healthchecks.io/)
 9. **Optional** Integration with logging systems e.g. [Seq](https://datalust.co/seq)
 
 ## Setup
@@ -188,15 +188,52 @@ Links
 
 ### Notifications
 
+Service notifies about events (successful DNS updates or errors during updates) using [Apprise](https://github.com/caronc/apprise)
+
+Example configuration to notify to [Telegram bot](https://github.com/caronc/apprise/wiki/Notify_telegram):
+
+```json
+{
+  "Apprise": {
+    "ServiceUrl": "http://192.168.1.101:8008/notify/",
+    "NotifyUrls": [
+      "tgram://{bot_token}/{chat_id}/"
+    ]
+  }
+}
+```
+
+| Option     | Description                                       |
+|------------|---------------------------------------------------|
+| ServiceUrl | URL of deployed Apprise service                   |
+| NotifyUrls | Collection of notification URLs in Apprise format |
+
+Apprise support 100+ services to notify, for full list see [Apprise Wiki](https://github.com/caronc/apprise/wiki)
+
 ### Healthcheck
+
+Example configuration to send healthcheck pings with [Healthchecks.io](https://healthchecks.io/)
+
+```json
+{
+  "HealthcheckIo": {
+    "Url": "https://hc-ping.com/<uuid>"
+  } 
+}
+```
+
+| Option | Description                                                              |
+|--------|--------------------------------------------------------------------------|
+| Url    | Base URL of [Healthcheck.io API](https://healthchecks.io/docs/http_api/) |
+
 
 ### Logging
 
+Service use [Serilog](https://serilog.net/) for logging.
+
 Default logging configuration can be extended in `data/settings.json`, e.g. to integrate with logging services.
 
-Program use [Serilog] to manage logs.
-
-Example configuration to integrate with  [Seq](https://datalust.co/seq):
+Example configuration to integrate with [Seq](https://datalust.co/seq):
 
 ```json
 {
@@ -212,7 +249,7 @@ Example configuration to integrate with  [Seq](https://datalust.co/seq):
       {
         "Name": "Seq",
         "Args": {
-          "serverUrl": "http://192.168.0.100:5341",
+          "serverUrl": "http://192.168.1.100:5341",
           "apiKey": "XXXXXXXXXXXXXXXXX",
           "controlLevelSwitch": "$controlSwitch"
         }
@@ -225,4 +262,9 @@ Example configuration to integrate with  [Seq](https://datalust.co/seq):
 > [!NOTE]
 > Console sink configuration required to write logs to docker.
 
-### Backup
+| Option             | Description                                                                                                                                                        |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| serverUrl          | URL of Seq service                                                                                                                                                 |
+| apiKey             | API key generated in Seq for these service                                                                                                                         |
+| controlLevelSwitch | Switch to control logging level. Default level specified in `appsettings.json` is `Information`, but it can be controlled from from Seq web UI using these switch. |
+
