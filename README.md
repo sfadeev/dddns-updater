@@ -218,12 +218,11 @@ Example configuration to integrate with  [Seq](https://datalust.co/seq):
         }
       }
     ]
-  },
-  ...
+  }
 }
 ```
 
-> [!INFO]
+> [!NOTE]
 > Console sink configuration required to write logs to docker.
 
 ### Backup
