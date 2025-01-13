@@ -38,7 +38,7 @@ Inspired by [qdm12/ddns-updater](https://github.com/qdm12/ddns-updater)
         "my-domain.ru"
       ],
       "Username": "provider-user",
-      "Password": "super-secret-password"
+      "Password": "provider-password"
     }
   ]
 }
@@ -61,6 +61,9 @@ services:
 ```
 
 ## Configuration
+
+Main configuration of service is stored in `appsettings.json` supplied in docker image.
+File `data/settings.json` loaded after `appsettings.json` and extends main configuration using [.NET configuration rules](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration).
 
 Start with the following sample content in `data/settings.json`:
 
@@ -165,7 +168,7 @@ Links
 #### Reg.ru
 
 > [!WARNING]
-> Reg.ru DNS provider implementation not completed, because provider does not allow access API with dynamic IP address.
+> Reg.ru DNS provider implementation not completed, because provider requires to specify static IPs to access API and does not allow access API from dynamic IP address.
 
 Links
 
@@ -181,3 +184,46 @@ Links
 
 1. Rucenter API documentation (ru) - https://www.nic.ru/help/api-1390/
 2. Rucenter app registration - https://www.nic.ru/manager/oauth.cgi
+3. Dynamic DNS API - https://www.nic.ru/help/dinamicheskij-dns-dlya-razrabotchikov_4391.html
+
+### Notifications
+
+### Healthcheck
+
+### Logging
+
+Default logging configuration can be extended in `data/settings.json`, e.g. to integrate with logging services.
+
+Program use [Serilog] to manage logs.
+
+Example configuration to integrate with  [Seq](https://datalust.co/seq):
+
+```json
+{
+  "Serilog": {
+    "Using":  [ "Serilog.Sinks.Console", "Serilog.Sinks.Seq" ],
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "[{Level:u5}] ({MachineName}/{ThreadId}) {SourceContext} - {Message:lj}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "Seq",
+        "Args": {
+          "serverUrl": "http://192.168.0.100:5341",
+          "apiKey": "XXXXXXXXXXXXXXXXX",
+          "controlLevelSwitch": "$controlSwitch"
+        }
+      }
+    ]
+  },
+  ...
+}
+```
+
+> [!INFO]
+> Console sink configuration required to write logs to docker.
+
+### Backup
