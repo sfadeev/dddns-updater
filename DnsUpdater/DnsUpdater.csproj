@@ -16,6 +16,7 @@
     </ItemGroup>
   
     <ItemGroup>
+      <PackageReference Include="DnsClient" Version="1.8.0" />
       <PackageReference Include="Quartz" Version="3.13.1" />
       <PackageReference Include="Quartz.AspNetCore" Version="3.13.1" />
       <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.13.1" />

@@ -44,6 +44,7 @@ namespace DnsUpdater
 					.AddHttpClient()
 					.AddServiceKeyProvider()
 					.AddHostedService<BackgroundMessenger>()
+					.AddSingleton<IIpResolver, DnsClientIpResolver>()
 					.AddSingleton<IIpProvider, DefaultIpProvider>()
 					.AddSingleton<IUpdateStorage, JsonUpdateStorage>()
 					.AddSingleton<IMessageSender, AppriseMessageSender>()

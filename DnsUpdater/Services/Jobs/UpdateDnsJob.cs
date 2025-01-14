@@ -30,7 +30,7 @@ namespace DnsUpdater.Services.Jobs
 
 	[DisallowConcurrentExecution]
 	public class UpdateDnsJob(ILogger<UpdateDnsJob> logger, IConfiguration configuration,
-		IIpProvider ipProvider, KeyedServiceProvider<IDnsProvider> keyedDnsServiceProvider,
+		IIpResolver ipResolver, IIpProvider ipProvider, KeyedServiceProvider<IDnsProvider> keyedDnsServiceProvider,
 		IHealthcheckService healthcheckService, IMessageSender messageSender, IUpdateStorage storage) : IJob
 	{
 		public async Task Execute(IJobExecutionContext context)
@@ -163,13 +163,11 @@ namespace DnsUpdater.Services.Jobs
 			return result.ToArray();
 		}
 
-		private static async Task<IPAddress[]> ResolveIpAddress(string hostNameOrAddress, CancellationToken cancellationToken)
+		private async Task<IPAddress[]> ResolveIpAddress(string hostNameOrAddress, CancellationToken cancellationToken)
 		{
 			try
 			{
-				var hostEntry = await Dns.GetHostEntryAsync(hostNameOrAddress, cancellationToken);
-
-				return hostEntry.AddressList;
+				return await ipResolver.ResolveIpAddress(hostNameOrAddress, cancellationToken);
 			}
 			catch (Exception ex)
 			{
