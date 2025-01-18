@@ -30,7 +30,7 @@ namespace DnsUpdater.Services.IpProviders
 
 					if (currentIpAddress.Success)
 					{
-						logger.LogInformation("Current IP address {ip} from provider {key}.", currentIpAddress.Data, key);
+						logger.LogInformation("Current IP address {Ip} from provider {Provider}.", currentIpAddress.Data, key);
 					
 						return currentIpAddress;	
 					}
@@ -39,7 +39,7 @@ namespace DnsUpdater.Services.IpProviders
 				{
 					errors.Add($"{key} - {ex.Message}");
 					
-					logger.LogError(ex, "Failed to get current ip address from {key} provider.", key);
+					logger.LogError(ex, "Failed to get current ip address from {Provider} provider.", key);
 				}
 				
 				attempts--;
@@ -56,7 +56,7 @@ namespace DnsUpdater.Services.IpProviders
 			{
 				var key = keys[_currentIndex];
 
-				logger.LogInformation("Using {key} ({number}/{total}) provider to get current ip address", key, _currentIndex + 1, keys.Count);
+				logger.LogDebug("Using {Provider} ({ProviderNumber}/{ProviderTotal}) provider to get current IP address", key, _currentIndex + 1, keys.Count);
 
 				_currentIndex = _currentIndex == keys.Count - 1 ? 0 : _currentIndex + 1;
 				
