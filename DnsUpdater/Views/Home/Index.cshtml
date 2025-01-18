@@ -12,6 +12,11 @@
 </head>
 <body>
 
+<dl>
+    <dt>Last update (UTC)</dt>
+    <dd>@Model.LastDate</dd>
+</dl>
+
 <table>
     <tr>
         <th>Date</th>
@@ -47,8 +52,6 @@
 </table>
 
 <dl>
-    <dt>Last update</dt>
-    <dd>@Model.LastDate</dd>
     <dt>OS</dt>
     <dd>@RuntimeInformation.OSDescription</dd>
     <dt>Framework</dt>
