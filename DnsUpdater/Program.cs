@@ -1,3 +1,4 @@
+using DnsUpdater.Models;
 using DnsUpdater.Services;
 using DnsUpdater.Services.DnsProviders;
 using DnsUpdater.Services.IpProviders;

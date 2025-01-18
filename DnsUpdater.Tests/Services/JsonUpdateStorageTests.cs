@@ -1,6 +1,8 @@
 using System.Net;
+using DnsUpdater.Models;
 using DnsUpdater.Services;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace DnsUpdater.Tests.Services
 {
@@ -9,12 +11,14 @@ namespace DnsUpdater.Tests.Services
 		[Test]
 		public async Task JsonUpdateStorage_QueryAndUpdate_ShouldBeConsistent()
 		{
-			var domainsCount = 3;
-			var updatesCount = 64 * IUpdateStorage.MaxUpdates;
-
 			// arrange
+			const int domainsCount = 3;
+			var options = new AppOptions { MaxUpdatesPerDomain = 5 };
+			var updatesCount = 64 * options.MaxUpdatesPerDomain;
+			
 			var cancellationToken = new CancellationTokenSource().Token;
-			var storage = new JsonUpdateStorage(NullLogger<JsonUpdateStorage>.Instance);
+			var appOptions = Options.Create(options);
+			var storage = new JsonUpdateStorage(NullLogger<JsonUpdateStorage>.Instance, appOptions);
 
 			// act
 			await Task.WhenAll(Enumerable.Range(0, updatesCount).Select(x =>
@@ -32,7 +36,7 @@ namespace DnsUpdater.Tests.Services
 
 			for (var d = 0; d < domainsCount; d++)
 			{
-				Assert.That(records[d].Updates, Has.Count.EqualTo(IUpdateStorage.MaxUpdates));
+				Assert.That(records[d].Updates, Has.Count.EqualTo(options.MaxUpdatesPerDomain));
 			}
 
             return;
@@ -62,7 +66,8 @@ namespace DnsUpdater.Tests.Services
 		{
 			// arrange
 			var cancellationToken = new CancellationTokenSource().Token;
-			var storage = new JsonUpdateStorage(NullLogger<JsonUpdateStorage>.Instance);
+			var appOptions = Options.Create(new AppOptions { MaxBackups = 2 });
+			var storage = new JsonUpdateStorage(NullLogger<JsonUpdateStorage>.Instance, appOptions);
 			
 			// act
 			var result = await storage.Backup(BackupMode.Force, cancellationToken);

@@ -4,13 +4,6 @@ using Quartz;
 
 namespace DnsUpdater.Services.Jobs
 {
-	public class AppOptions : IConfigOptions
-	{
-		public static string SectionName => "Settings";
-
-		public string? BaseUrl { get; init; }
-	}
-	
 	public class DnsProviderSettings
 	{
 		public required string Provider { get; init; }

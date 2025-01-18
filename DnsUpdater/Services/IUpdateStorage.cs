@@ -3,13 +3,12 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DnsUpdater.Models;
+using Microsoft.Extensions.Options;
 
 namespace DnsUpdater.Services
 {
 	public interface IUpdateStorage
 	{
-		static readonly int MaxUpdates = 10;
-		
 		Task<DbUpdates> Store(string domain, IPAddress ip, string provider, bool success, string? message, CancellationToken cancellationToken);
 		
 		Task<DbUpdates> Query(CancellationToken cancellationToken);
@@ -50,7 +49,7 @@ namespace DnsUpdater.Services
 		Force = 1
 	}
 
-	public class JsonUpdateStorage(ILogger<JsonUpdateStorage> logger) : IUpdateStorage
+	public class JsonUpdateStorage(ILogger<JsonUpdateStorage> logger, IOptions<AppOptions> appOptions) : IUpdateStorage
 	{
 		private readonly JsonSerializerOptions _jsonOptions = new()
 		{
@@ -81,6 +80,8 @@ namespace DnsUpdater.Services
 
 			using (await _lock.LockAsync(cancellationToken))
 			{
+				var options = appOptions.Value;
+				
 				var now = DateTime.Now;
 
 				var dbUpdates = await ReadUpdates(cancellationToken);
@@ -103,7 +104,7 @@ namespace DnsUpdater.Services
 					Message = message
 				});
 
-				if (dbDomain.Updates.Count > IUpdateStorage.MaxUpdates)
+				if (dbDomain.Updates.Count > options.MaxUpdatesPerDomain)
 				{
 					dbDomain.Updates.RemoveAt(0);
 				}
@@ -130,7 +131,7 @@ namespace DnsUpdater.Services
 
 		private readonly string[] _backupFiles = [ Program.ConfigFilePath, Program.UpdatesFilePath ];
 		
-		public Task<Result<FileInfo>> Backup(BackupMode mode, CancellationToken cancellationToken)
+		public async Task<Result<FileInfo>> Backup(BackupMode mode, CancellationToken cancellationToken)
 		{
 			var shouldBackup = ShouldBackup(mode);
 
@@ -154,11 +155,35 @@ namespace DnsUpdater.Services
 				
 				logger.LogInformation("Created backup {name}, size {size} bytes.", fileInfo.Name, fileInfo.Length);
 
-				// todo: remove old backups
-				return Task.FromResult(Result.CreateSuccessResult(fileInfo));
+				await RemoveOldBackups();
+				
+				return Result.CreateSuccessResult(fileInfo);
 			}
 			
-			return Task.FromResult(Result.CreateErrorResult<FileInfo>());
+			return Result.CreateErrorResult<FileInfo>();
+		}
+
+		private Task<int> RemoveOldBackups()
+		{
+			var options = appOptions.Value;
+			
+			var oldBackups = new DirectoryInfo(Program.BackupDirPath)
+				.EnumerateFiles(Program.BackupFilePrefix + "*" + ".zip")
+				.OrderByDescending(x => x.LastWriteTime)
+				.Skip(options.MaxBackups);
+
+			var result = 0;
+			
+			foreach (var fileInfo in oldBackups)
+			{
+				logger.LogDebug("Removing old backup {filePath}", fileInfo.FullName);
+				
+				fileInfo.Delete();
+				
+				result++;
+			}
+			
+			return Task.FromResult(result);
 		}
 
 		private bool ShouldBackup(BackupMode mode)

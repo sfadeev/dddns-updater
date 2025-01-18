@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using DnsUpdater.Models;
 using DnsUpdater.Services.Jobs;
 using Microsoft.Extensions.Options;
 
