@@ -12,9 +12,6 @@ namespace DnsUpdater
 	public abstract class Program
 	{
 		public const string ConfigFilePath = "./data/settings.json";
-		public const string UpdatesFilePath = "./data/updates.json";
-		public const string BackupDirPath = "./data/";
-		public const string BackupFilePrefix = "backup";
 		
 		public static void Main(string[] args)
 		{

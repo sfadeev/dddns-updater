@@ -48,7 +48,7 @@ Inspired by [qdm12/ddns-updater](https://github.com/qdm12/ddns-updater)
 services:
     dddns-updater:
         container_name: dddns-updater
-        image: ghcr.io/sfadeev/dddns-updater:v0.2.2
+        image: ghcr.io/sfadeev/dddns-updater:latest
         ports:
             - 8080:8080
         restart: unless-stopped
@@ -97,9 +97,15 @@ Start with the following sample content in `data/settings.json`:
 
 Common options in section `Settings`
 
-| Option  | Default | Description          |
-|---------|---------|----------------------|
-| BaseUrl |         | Base URL for web UI  |
+| Option                 | Default               | Description                                           |
+|------------------------|-----------------------|-------------------------------------------------------|
+| `BaseUrl`              |                       | Base URL for web UI                                   |
+| `UpdatesFilePath`      | `./data/updates.json` | File to store updates history                         |
+| `BackupDirPath`        | `./data/`             | Directory for backups                                 |
+| `BackupFileNamePrefix` | `backup`              | Backup filename prefix                                |
+| `MaxUpdatesPerDomain`  | `10`                  | Max records in updates history stored for each domain |
+| `MaxBackups`           | `7`                   | Max backup files count                                |
+
 
 ### Providers
 
@@ -126,8 +132,8 @@ Example configuration
 
 | Option   | Required           | Description                                   |
 |----------|--------------------|-----------------------------------------------|
-| Username | :heavy_check_mark: | Beget username                                |
-| Password | :heavy_check_mark: | Beget password                                |
+| `Username` | :white_check_mark: | Beget username                                |
+| `Password` | :white_check_mark: | Beget password                                |
 
 Links
 
@@ -156,9 +162,9 @@ Example configuration
 
 | Option   | Required           | Description                                               |
 |----------|--------------------|-----------------------------------------------------------|
-| Username | :heavy_check_mark: | Timeweb username                                          |
-| Password | :heavy_check_mark: | Timeweb password                                          |
-| appkey   | :heavy_check_mark: | Timeweb API key, should be requested from Timeweb support |
+| `Username` | :white_check_mark: | Timeweb username                                          |
+| `Password` | :white_check_mark: | Timeweb password                                          |
+| `appkey`   | :white_check_mark: | Timeweb API key, should be requested from Timeweb support |
 
 Links
 
@@ -205,8 +211,8 @@ Example configuration to notify to [Telegram bot](https://github.com/caronc/appr
 
 | Option     | Description                                       |
 |------------|---------------------------------------------------|
-| ServiceUrl | URL of deployed Apprise service                   |
-| NotifyUrls | Collection of notification URLs in Apprise format |
+| `ServiceUrl` | URL of deployed Apprise service                   |
+| `NotifyUrls` | Collection of notification URLs in Apprise format |
 
 Apprise support 100+ services to notify, for full list see [Apprise Wiki](https://github.com/caronc/apprise/wiki)
 
@@ -224,7 +230,7 @@ Example configuration to send healthcheck pings with [Healthchecks.io](https://h
 
 | Option | Description                                                              |
 |--------|--------------------------------------------------------------------------|
-| Url    | Base URL of [Healthcheck.io API](https://healthchecks.io/docs/http_api/) |
+| `Url`    | Base URL of [Healthcheck.io API](https://healthchecks.io/docs/http_api/) |
 
 
 ### Logging
@@ -264,7 +270,6 @@ Example configuration to integrate with [Seq](https://datalust.co/seq):
 
 | Option             | Description                                                                                                                                                        |
 |--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| serverUrl          | URL of Seq service                                                                                                                                                 |
-| apiKey             | API key generated in Seq for these service                                                                                                                         |
-| controlLevelSwitch | Switch to control logging level. Default level specified in `appsettings.json` is `Information`, but it can be controlled from from Seq web UI using these switch. |
-
+| `serverUrl`          | URL of Seq service                                                                                                                                                 |
+| `apiKey`             | API key generated in Seq for these service                                                                                                                         |
+| `controlLevelSwitch` | Switch to control logging level. Default level specified in `appsettings.json` is `Information`, but it can be controlled from from Seq web UI using these switch. |

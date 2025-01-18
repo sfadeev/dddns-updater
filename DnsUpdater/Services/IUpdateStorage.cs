@@ -64,9 +64,11 @@ namespace DnsUpdater.Services
 		{
 			DbUpdates? result = null;
 					
-			if (File.Exists(Program.UpdatesFilePath))
+			var options = appOptions.Value;
+			
+			if (File.Exists(options.UpdatesFilePath))
 			{
-				var content = await File.ReadAllTextAsync(Program.UpdatesFilePath, cancellationToken);
+				var content = await File.ReadAllTextAsync(options.UpdatesFilePath, cancellationToken);
 					
 				result = JsonSerializer.Deserialize<DbUpdates>(content, _jsonOptions);
 			}
@@ -76,7 +78,7 @@ namespace DnsUpdater.Services
 		
 		public async Task<DbUpdates> Store(string domain, IPAddress ip, string provider, bool success, string? message, CancellationToken cancellationToken)
 		{
-			logger.LogDebug("Storing {ip} for {domain} to {provider}", ip, domain, provider);
+			logger.LogDebug("Storing {Ip} for {Domain} to {Provider}", ip, domain, provider);
 
 			using (await _lock.LockAsync(cancellationToken))
 			{
@@ -113,7 +115,7 @@ namespace DnsUpdater.Services
 
 				var json = JsonSerializer.Serialize(dbUpdates, _jsonOptions);
 
-				await File.WriteAllTextAsync(Program.UpdatesFilePath, json, cancellationToken);
+				await File.WriteAllTextAsync(options.UpdatesFilePath, json, cancellationToken);
 
 				return dbUpdates;
 			}
@@ -128,23 +130,25 @@ namespace DnsUpdater.Services
 				return await ReadUpdates(cancellationToken);
 			}
 		}
-
-		private readonly string[] _backupFiles = [ Program.ConfigFilePath, Program.UpdatesFilePath ];
 		
 		public async Task<Result<FileInfo>> Backup(BackupMode mode, CancellationToken cancellationToken)
 		{
-			var shouldBackup = ShouldBackup(mode);
+			var options = appOptions.Value;
+		
+			var configFiles = new[] { Program.ConfigFilePath, options.UpdatesFilePath };
+
+			var shouldBackup = ShouldBackup(mode, configFiles);
 
 			if (shouldBackup)
 			{
-				var backupFilePath = Path.Combine(Program.BackupDirPath, 
-					$"{Program.BackupFilePrefix}-{DateTime.Now.ToString("s").Replace(":", "-")}.zip");
+				var backupFilePath = Path.Combine(options.BackupDirPath, 
+					$"{options.BackupFileNamePrefix}-{DateTime.Now.ToString("s").Replace(":", "-")}.zip");
 
 				using (var stream = new FileStream(backupFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
 				{
 					using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
 					{
-						foreach (var backupFile in _backupFiles.Where(File.Exists))
+						foreach (var backupFile in configFiles.Where(File.Exists))
 						{
 							archive.CreateEntryFromFile(backupFile, new FileInfo(backupFile).Name);
 						}
@@ -153,7 +157,7 @@ namespace DnsUpdater.Services
 
 				var fileInfo = new FileInfo(backupFilePath);
 				
-				logger.LogInformation("Created backup {name}, size {size} bytes.", fileInfo.Name, fileInfo.Length);
+				logger.LogInformation("Created backup {FileName}, size {FileLength} bytes.", fileInfo.Name, fileInfo.Length);
 
 				await RemoveOldBackups();
 				
@@ -167,8 +171,7 @@ namespace DnsUpdater.Services
 		{
 			var options = appOptions.Value;
 			
-			var oldBackups = new DirectoryInfo(Program.BackupDirPath)
-				.EnumerateFiles(Program.BackupFilePrefix + "*" + ".zip")
+			var oldBackups = EnumerateBackupFiles()
 				.OrderByDescending(x => x.LastWriteTime)
 				.Skip(options.MaxBackups);
 
@@ -176,7 +179,7 @@ namespace DnsUpdater.Services
 			
 			foreach (var fileInfo in oldBackups)
 			{
-				logger.LogDebug("Removing old backup {filePath}", fileInfo.FullName);
+				logger.LogDebug("Removing old backup {FilePath}", fileInfo.FullName);
 				
 				fileInfo.Delete();
 				
@@ -186,18 +189,23 @@ namespace DnsUpdater.Services
 			return Task.FromResult(result);
 		}
 
-		private bool ShouldBackup(BackupMode mode)
+		/// <summary>
+		/// Check if config files are more recent than last backup.
+		/// </summary>
+		/// <param name="mode"></param>
+		/// <param name="configFiles"></param>
+		/// <returns></returns>
+		private bool ShouldBackup(BackupMode mode, IEnumerable<string> configFiles)
 		{
 			if (mode == BackupMode.Force) return true;
 			
-			var lastWrite = _backupFiles
+			var lastWrite = configFiles
 				.Select(x => new FileInfo(x))
 				.Where(x => x.Exists)
 				.Select(x => x.LastWriteTime)
 				.LastOrDefault();
-
-			var lastBackup = new DirectoryInfo(Program.BackupDirPath)
-				.EnumerateFiles(Program.BackupFilePrefix + "*" + ".zip")
+			
+			var lastBackup = EnumerateBackupFiles()
 				.Select(x => x.LastWriteTime)
 				.OrderDescending()
 				.FirstOrDefault();
@@ -206,10 +214,18 @@ namespace DnsUpdater.Services
 
 			if (result)
 			{
-				logger.LogDebug("Backup required - last config write: {lastWrite}, last backup: {lastBackup}.", lastWrite, lastBackup);	
+				logger.LogDebug("Backup required - last config write: {LastWrite}, last backup: {LastBackup}.", lastWrite, lastBackup);	
 			}
 			
 			return result;
+		}
+
+		private IEnumerable<FileInfo> EnumerateBackupFiles()
+		{
+			var options = appOptions.Value;
+			
+			return new DirectoryInfo(options.BackupDirPath)
+				.EnumerateFiles(options.BackupFileNamePrefix + "*" + ".zip");
 		}
 	}
 }
