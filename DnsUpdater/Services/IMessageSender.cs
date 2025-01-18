@@ -54,7 +54,7 @@ namespace DnsUpdater.Services
 				
 				if (settings?.ServiceUrl == null)
 				{
-					logger.LogDebug("Apprise notifications is not configured, message not sent.\n{message}", message);
+					logger.LogDebug("Apprise notifications is not configured, message not sent.\n{Message}", message);
 					
 					return false;
 				}
@@ -91,7 +91,7 @@ namespace DnsUpdater.Services
 			}
 			catch (Exception ex)
 			{
-				logger.LogError(ex, "Failed to send message:\n{message}", message);
+				logger.LogError(ex, "Failed to send message:\n{Message}", message);
 				
 				return false;
 			}

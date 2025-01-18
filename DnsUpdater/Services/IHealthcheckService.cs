@@ -71,7 +71,7 @@ namespace DnsUpdater.Services
 			}
 			catch (Exception ex)
 			{
-				logger.LogError(ex, "Failed to ping {message}", method);
+				logger.LogError(ex, "Failed to ping {Method}", method);
 				
 				return false;
 			}
