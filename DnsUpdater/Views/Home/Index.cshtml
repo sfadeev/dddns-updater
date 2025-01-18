@@ -1,4 +1,5 @@
-﻿@using System.Runtime.InteropServices
+﻿@using System.Reflection
+@using System.Runtime.InteropServices
 @model DnsUpdater.Services.DbUpdates;
 
 <!DOCTYPE html>
@@ -10,15 +11,6 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
 </head>
 <body>
-
-<dl>
-    <dt>OS</dt>
-    <dd>@RuntimeInformation.OSDescription</dd>
-    <dt>Framework</dt>
-    <dd>@RuntimeInformation.FrameworkDescription</dd>
-    <dt>Last update</dt>
-    <dd>@Model.LastDate</dd>
-</dl>
 
 <table>
     <tr>
@@ -53,6 +45,17 @@
     }
 
 </table>
+
+<dl>
+    <dt>Last update</dt>
+    <dd>@Model.LastDate</dd>
+    <dt>OS</dt>
+    <dd>@RuntimeInformation.OSDescription</dd>
+    <dt>Framework</dt>
+    <dd>@RuntimeInformation.FrameworkDescription</dd>
+    <dt>Assembly</dt>
+    <dd>@Assembly.GetEntryAssembly()</dd>
+</dl>
 
 <script src="~/js/site.js" asp-append-version="true"></script>
 

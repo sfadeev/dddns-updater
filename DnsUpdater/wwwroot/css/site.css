@@ -43,3 +43,16 @@ tr.archive td {
     color: #fff;
     background-color: #aaaaaa;
 }
+
+dl {
+    display: grid;
+    grid-template-columns: max-content auto;
+}
+
+dt {
+    grid-column-start: 1;
+}
+
+dd {
+    grid-column-start: 2;
+}
