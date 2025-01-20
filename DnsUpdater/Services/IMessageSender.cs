@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text.Json;
-using DnsUpdater.Models;
 using Microsoft.Extensions.Options;
 
 namespace DnsUpdater.Services
@@ -41,7 +40,7 @@ namespace DnsUpdater.Services
 	}
 	
 	public class AppriseMessageSender(ILogger<AppriseMessageSender> logger,
-		IOptions<AppOptions> appOptions, IOptions<AppriseOptions> options, IHttpClientFactory httpClientFactory) : IMessageSender
+		IOptions<AppriseOptions> options, IHttpClientFactory httpClientFactory) : IMessageSender
 	{
 		private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 		
@@ -49,7 +48,6 @@ namespace DnsUpdater.Services
 		{
 			try
 			{
-				var appSettings = appOptions.Value;
 				var settings = options.Value;
 				
 				if (settings?.ServiceUrl == null)
@@ -67,8 +65,7 @@ namespace DnsUpdater.Services
 					_ => string.Empty
 				};
 
-				var title = icon + Assembly.GetEntryAssembly()?.GetName().Name + " @ " + Environment.MachineName
-				            + (appSettings?.BaseUrl != null ? " — " + appSettings?.BaseUrl : string.Empty);
+				var title = icon + " " + Assembly.GetEntryAssembly()?.GetName().Name + " @ " + Environment.MachineName;
 				
 				var bodyJson = JsonSerializer.Serialize(new Message
 				{

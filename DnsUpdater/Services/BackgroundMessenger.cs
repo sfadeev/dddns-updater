@@ -1,8 +1,9 @@
 using DnsUpdater.Models;
+using Microsoft.Extensions.Options;
 
 namespace DnsUpdater.Services
 {
-	public class BackgroundMessenger(ILogger<BackgroundMessenger> logger,
+	public class BackgroundMessenger(ILogger<BackgroundMessenger> logger, IOptions<AppOptions> appOptions,
 		IHealthcheckService healthcheckService, IMessageSender messageSender) : BackgroundService
 	{
 		protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -11,7 +12,9 @@ namespace DnsUpdater.Services
 
 			await healthcheckService.Start(cancellationToken);
 			
-			await messageSender.Send(Messages.ServiceStarted(), MessageType.Info, cancellationToken);
+			var options = appOptions.Value;
+			
+			await messageSender.Send(Messages.ServiceStarted(options.BaseUrl), MessageType.Info, cancellationToken);
 		}
 		
 		public override async Task StopAsync(CancellationToken cancellationToken)

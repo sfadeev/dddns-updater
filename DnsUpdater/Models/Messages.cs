@@ -4,9 +4,10 @@ namespace DnsUpdater.Models
 {
 	public static class Messages
 	{
-		public static string ServiceStarted()
+		public static string ServiceStarted(string? baseUrl)
 		{
-			return "Service started 👍";
+			return "Service started 👍\n" +
+			       baseUrl;
 		}
 		
 		public static string ServiceStopped()
