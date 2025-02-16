@@ -38,5 +38,4 @@ namespace DnsUpdater.Services
 			select (TKey)service.ServiceKey!
 		).ToImmutableList();
 	}
-
 }

@@ -6,8 +6,7 @@ namespace DnsUpdater.Models
 	{
 		public static string ServiceStarted(string? baseUrl)
 		{
-			return "Service started 👍\n" +
-			       baseUrl;
+			return "Service started 👍\n" + baseUrl;
 		}
 		
 		public static string ServiceStopped()
