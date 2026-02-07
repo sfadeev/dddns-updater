@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <AssemblyName>dddns-updater</AssemblyName>
-        <AssemblyVersion>0.3.2</AssemblyVersion>
+        <AssemblyVersion>0.3.4</AssemblyVersion>
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
