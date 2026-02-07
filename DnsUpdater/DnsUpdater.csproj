@@ -3,7 +3,7 @@
     <PropertyGroup>
         <AssemblyName>dddns-updater</AssemblyName>
         <AssemblyVersion>0.3.2</AssemblyVersion>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -18,14 +18,14 @@
   
     <ItemGroup>
       <PackageReference Include="DnsClient" Version="1.8.0" />
-      <PackageReference Include="Quartz" Version="3.13.1" />
-      <PackageReference Include="Quartz.AspNetCore" Version="3.13.1" />
-      <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.13.1" />
-      <PackageReference Include="Serilog" Version="4.2.0" />
-      <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+      <PackageReference Include="Quartz" Version="3.15.1" />
+      <PackageReference Include="Quartz.AspNetCore" Version="3.15.1" />
+      <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.15.1" />
+      <PackageReference Include="Serilog" Version="4.3.0" />
+      <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
       <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
       <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
-      <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
       <PackageReference Include="Serilog.Sinks.Seq" Version="9.0.0" />
     </ItemGroup>
 
