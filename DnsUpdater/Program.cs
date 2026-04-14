@@ -48,7 +48,8 @@ namespace DnsUpdater
 					.AddSingleton<IMessageSender, AppriseMessageSender>()
 					.AddSingleton<IHealthcheckService, HealthcheckIoService>()
 
-					.AddKeyedTransient<IIpProvider, IfconfigIpProvider>("ifconfig")
+					// temp excluded - returns wrong ips
+					// .AddKeyedTransient<IIpProvider, IfconfigIpProvider>("ifconfig")
 					// temp excluded as it conflicts by ip address with chatgpt.com - uses the same ips 188.114.98.224, 188.114.99.224
 					// todo: remove round robin for ip providers and use consensus
 					// .AddKeyedTransient<IIpProvider, IpifiIpProvider>("ipify")
