@@ -48,7 +48,7 @@ namespace DnsUpdater.Services.Jobs
 
 			var currentIpAddress = currentIpAddressResult.Data!;
 			
-			if (currentIpAddress.IsPrivateV4())
+			if (currentIpAddress.IsNotGloballyReachableV4())
 			{
 				await messageSender.Send(Messages.PrivateIpWarning(currentIpAddress), MessageType.Warning, cancellationToken);
 				

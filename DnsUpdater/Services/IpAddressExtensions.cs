@@ -1,46 +1,49 @@
 using System.Net;
+using System.Net.Sockets;
 
 namespace DnsUpdater.Services
 {
 	public static class IpAddressExtensions
 	{
 		/// <summary>
-		/// https://en.wikipedia.org/wiki/Reserved_IP_addresses
+		/// Returns whether an address is unsuitable as a globally reachable IPv4
+		/// address. The ranges follow the IANA IPv4 Special-Purpose Address
+		/// Registry: https://www.iana.org/assignments/iana-ipv4-special-registry/
 		/// </summary>
-		public static bool IsPrivateV4(this IPAddress ip)
+		public static bool IsNotGloballyReachableV4(this IPAddress ip)
 		{
 			var ipBytes = ip.GetAddressBytes();
-			
-			if (ipBytes.Length == 4)
-			{
-				switch (ipBytes[0])
-				{
-					// 10.0.0.0–10.255.255.255
-					case 10:
-						
-					// 100.64.0.0–100.127.255.255
-					case 100 when ipBytes[1] >= 64 && ipBytes[1] <= 127:
-						return true;
-					
-					// 172.16.0.0–172.31.255.255
-					case 172 when ipBytes[1] <= 31:
-						return true;
-					
-					// 192.0.0.0–192.0.0.255
-					case 192 when ipBytes[1] == 0 && ipBytes[2] == 0:
-						return true;
-					
-					// 192.168.0.0–192.168.255.255
-					case 192 when ipBytes[1] == 168:
-						return true;
 
-					// 198.18.0.0–198.19.255.255
-					case 192 when ipBytes[1] >= 18 && ipBytes[1] <= 19:
-						return true;
-				}
+			if (ip.AddressFamily != AddressFamily.InterNetwork)
+			{
+				return true;
 			}
 
-			return false;
+			return ipBytes[0] switch
+			{
+				// "This network", private-use, shared address space and loopback.
+				0 or 10 or 127 => true,
+				100 when ipBytes[1] is >= 64 and <= 127 => true,
+
+				// Link-local and private-use ranges.
+				169 when ipBytes[1] == 254 => true,
+				172 when ipBytes[1] is >= 16 and <= 31 => true,
+				192 when ipBytes[1] == 168 => true,
+
+				// IETF assignments. Only 192.0.0.9 and 192.0.0.10 are globally reachable.
+				192 when ipBytes[1] == 0 && ipBytes[2] == 0 && ipBytes[3] is not (9 or 10) => true,
+				192 when ipBytes[1] == 0 && ipBytes[2] == 2 => true,
+				192 when ipBytes[1] == 88 && ipBytes[2] == 99 => true,
+
+				// Benchmarking and documentation ranges.
+				198 when ipBytes[1] is 18 or 19 => true,
+				198 when ipBytes[1] == 51 && ipBytes[2] == 100 => true,
+				203 when ipBytes[1] == 0 && ipBytes[2] == 113 => true,
+
+				// Reserved and limited broadcast.
+				>= 240 => true,
+				_ => false
+			};
 		}
 	}
 }
