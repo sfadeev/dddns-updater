@@ -13,6 +13,14 @@ For details, see:
 
 - `.agents/architecture.md` for the code map and runtime behaviour.
 - `.agents/verification.md` for the usual validation commands.
+- `.agents/collaboration.md` for durable collaboration and response-format
+  preferences.
+
+## Communication
+
+Use numbered lists for findings, tasks, recommendations, steps, and other
+items that may need to be referenced later. Keep numbering stable within a
+document or response whenever practical.
 
 ## Repository layout
 
