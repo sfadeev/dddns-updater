@@ -6,6 +6,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 	ProjectSection(SolutionItems) = preProject
 		Dockerfile = Dockerfile
 		README.md = README.md
+		AGENTS.md = AGENTS.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DnsUpdater.Tests", "DnsUpdater.Tests\DnsUpdater.Tests.csproj", "{06E2C09C-0461-433B-A444-0448AE00A29B}"
